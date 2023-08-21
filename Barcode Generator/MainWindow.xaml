@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:Barcode_Generator"
     
         mc:Ignorable="d"
-        Title="File Watcher" Height="300" Width="800"
+        Title="File Watcher" Height="500" Width="800"
         WindowStyle="None"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen"
@@ -96,7 +96,8 @@
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
-                                </Grid.RowDefinitions>
+                                    <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
                             <local:WindowHeader Grid.Row="0" HeaderTitle="Barcode Generator"/>
 
                                 <Border Grid.Row="1" Margin="20" Background="White" CornerRadius="10">
@@ -109,10 +110,10 @@
                                         </Grid.ColumnDefinitions>
 
                                         <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="20">
-                                            <TextBlock Text="BarCode" Margin="0,0,0,5"/>
+                                            <TextBlock Text="Barcode" Margin="0,0,0,5"/>
                                             <TextBox  x:Name="barCodeTextBox" Width="150" Height="30" Margin="0,0,0,10"/>
                                             <TextBlock x:Name="barcodeErrorText" Foreground="Red"/>
-                                            <Button Style="{StaticResource CustomButtonStyle}" Content="Generate" Width="100" Click="GenerateButton_Click"/>
+                                        <Button Style="{StaticResource CustomButtonStyle}"  Height="40" Content="Generate" Width="100" Click="GenerateButton_Click"/>
                                         </StackPanel>
 
                                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="20">
@@ -125,8 +126,9 @@
                                                 <TextBlock Text="To" />
                                                 <TextBox  x:Name="endTextBox" Width="100" Height="30"/>
                                             </StackPanel>
-                                            <Button Style="{StaticResource CustomButtonStyle}" Content="Print" Width="80" Click="PrintButton_Click"/>
+                                        <Button Style="{StaticResource CustomButtonStyle}"  Height="40" Content="Print" Width="80" Click="PrintButton_Click"/>
                                         </StackPanel>
+                                        
 
                                         <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="20">
                                             <TextBlock Text="Choose File or Box" Foreground="Red" Margin="0,0,0,5"/>
@@ -142,8 +144,49 @@
                                 </Grid>
                                 </Border>
 
-                             
-                            </Grid>
+                            <Border Grid.Row="2" Margin="20" Background="White" CornerRadius="10">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="20">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="Text Barcode" Margin="10"/>
+                                            <TextBox  x:Name="InputbarCodeTextBox" Width="300" Height="30" Margin="0,0,0,10"/>
+                                            <Button VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10,0,0,10" Style="{StaticResource CustomButtonStyle}" Content="Print" Width="100" Height="30" Click="GenerateTextButton_Click"/>
+                                        </StackPanel>
+
+
+                                        <StackPanel Margin="10,0,0,10" Orientation="Horizontal">
+                                            <CheckBox Margin="5" x:Name="InputBarcodeCheckBox" IsChecked="True" ></CheckBox>
+                                            <Label Content="Show Barcode"></Label>
+                                        </StackPanel>
+                                        <StackPanel Margin="10,0,0,10" Orientation="Horizontal">
+                                            <CheckBox Margin="5" x:Name="InputBarcodeImgCheckBox" IsChecked="True" ></CheckBox>
+                                            <Label Content="Show Image"></Label>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBox Visibility="Collapsed" x:Name="excelFilePathTextBox" Width="300" Height="30" Margin="10" IsReadOnly="True"/>
+                                            <Button Style="{StaticResource CustomButtonStyle}" Content="Print From Excel" Height="40" Width="150" Click="UploadExcelButton_Click"/>
+                                            <Button Style="{StaticResource CustomButtonStyle}" Content="Download Template" Height="40" Margin="10,0,0,0" Width="150" Click="DownloadTemplateButton_Click"/>
+
+
+                                        </StackPanel>
+
+                                        <TextBlock x:Name="InputbarcodeErrorText" Foreground="Red"/>
+
+                                        
+                                    </StackPanel>
+                                 
+
+                                </Grid>
+                            </Border>
+
+                        </Grid>
                         </ScrollViewer>
                     </Border>
 

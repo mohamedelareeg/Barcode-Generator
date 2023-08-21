@@ -1,4 +1,5 @@
-﻿using System;
+﻿using OfficeOpenXml;
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
@@ -20,6 +21,8 @@ namespace Barcode_Generator
             {
                 context.Database.EnsureCreated();
             }
+            // Set the license context for OfficeOpenXml
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
         }
       
 

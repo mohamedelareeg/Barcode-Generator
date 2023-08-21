@@ -6,14 +6,33 @@
     <RootNamespace>Barcode_Generator</RootNamespace>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>favicon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Assets\barcode.png" />
+    <None Remove="Assets\photo.png" />
+    <None Remove="Assets\text.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="favicon.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DocumentFormat.OpenXml" Version="2.20.0" />
+    <PackageReference Include="EPPlus" Version="6.2.8" />
     <PackageReference Include="FontAwesome.WPF" Version="4.7.0.9" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="7.0.10" />
     <PackageReference Include="System.Drawing.Common" Version="7.0.0" />
     <PackageReference Include="ZXing.Net" Version="0.16.9" />
     <PackageReference Include="ZXing.Net.Bindings.Windows.Compatibility" Version="0.16.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\barcode.png" />
+    <Resource Include="Assets\photo.png" />
+    <Resource Include="Assets\text.png" />
   </ItemGroup>
 
 </Project>
