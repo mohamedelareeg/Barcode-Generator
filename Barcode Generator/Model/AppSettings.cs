@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Barcode_Generator
+namespace Barcode_Generator.Model
 {
     [Serializable]
     public class AppSettings

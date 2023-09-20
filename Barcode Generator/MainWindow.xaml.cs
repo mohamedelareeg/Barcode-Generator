@@ -38,6 +38,7 @@ namespace Barcode_Generator
     /// </summary>
     public partial class MainWindow : Window
     {
+        private string lastIndexofAsset = "";
         private string lastIndexofBox = "";
         private string lastIndexofFile = "";
         private LogEntryContext _context;
@@ -127,14 +128,16 @@ namespace Barcode_Generator
         {
             lastIndexofBox = "0";
             lastIndexofFile = "0";
+            lastIndexofAsset = "0";
             var MaxNumof = await _context.maxnumOfFileAndBoxes.FirstOrDefaultAsync(m => m.Id == 1);
             if (MaxNumof != null)
             {
 
                 lastIndexofBox = MaxNumof.MaxNumOfBox;
                 lastIndexofFile = MaxNumof.MaxNumOfFile;
+                lastIndexofAsset = MaxNumof.MaxNumOfAsset;
             }
-
+            lastIndexedAssetText.Text = $"* Last Asset: {lastIndexofAsset}";
             lastIndexedBoxText.Text = $"* Last Box: {lastIndexofBox}";
             lastIndexedFileText.Text = $"* Last File: {lastIndexofFile}";
             RemainCount.Text = $"* Remain: {appSettings.MaxBarcodePrints - appSettings.UsedBarcodePrints}";
@@ -220,27 +223,45 @@ namespace Barcode_Generator
                     MaxnumOfFileAndBox maxnumOfFileAndBox = new MaxnumOfFileAndBox();
                     maxnumOfFileAndBox.MaxNumOfFile = "0000000";
                     maxnumOfFileAndBox.MaxNumOfBox = "000000";
-                    _context.maxnumOfFileAndBoxes.Add(maxnumOfFileAndBox);
+                maxnumOfFileAndBox.MaxNumOfAsset = "000000";
+                _context.maxnumOfFileAndBoxes.Add(maxnumOfFileAndBox);
                     _context.SaveChanges();
                 }
-
-                if (Type == "Box")
+                if (Type == "Asset")
                 {
                     var Max = await _context.maxnumOfFileAndBoxes.FirstOrDefaultAsync(m => m.Id == 1);
-                    int.TryParse(Max.MaxNumOfBox, out int intmaxofbox);
+                    int.TryParse(Max.MaxNumOfAsset, out int intmaxofbox);
                     int.TryParse(Count, out int plus);
                     int end = intmaxofbox + plus;
                     for (int i = intmaxofbox + 1; i <= end; i++)
                     {
                         string current = i.ToString().PadLeft(6, '0');
-                        Max.MaxNumOfBox = current;
+                        Max.MaxNumOfAsset = current;
                         _context.maxnumOfFileAndBoxes.Update(Max);
-                        GenerateHelper.GenerateBarCode(current, Type);
+                        GenerateHelper.Zebra_5_5_Landscape(current, Type);
                         // Update the last indexed box
-                        lastIndexofBox = current;
-                        lastIndexedBoxText.Text = $"* Last Box: {lastIndexofBox}";
+                        lastIndexofAsset = current;
+                        lastIndexedAssetText.Text = $"* Last Asset: {lastIndexofAsset}";
                     }
                     await _context.SaveChangesAsync();
+                }
+                if (Type == "Box")
+                    {
+                        var Max = await _context.maxnumOfFileAndBoxes.FirstOrDefaultAsync(m => m.Id == 1);
+                        int.TryParse(Max.MaxNumOfBox, out int intmaxofbox);
+                        int.TryParse(Count, out int plus);
+                        int end = intmaxofbox + plus;
+                        for (int i = intmaxofbox + 1; i <= end; i++)
+                        {
+                            string current = i.ToString().PadLeft(6, '0');
+                            Max.MaxNumOfBox = current;
+                            _context.maxnumOfFileAndBoxes.Update(Max);
+                            GenerateHelper.Zebra_5_5_Landscape(current, Type);
+                            // Update the last indexed box
+                            lastIndexofBox = current;
+                            lastIndexedBoxText.Text = $"* Last Box: {lastIndexofBox}";
+                        }
+                        await _context.SaveChangesAsync();
                 }
 
                 if (Type == "File")
@@ -254,7 +275,7 @@ namespace Barcode_Generator
                         string current = i.ToString().PadLeft(7, '0');
                         Max.MaxNumOfFile = current;
                         _context.maxnumOfFileAndBoxes.Update(Max);
-                        GenerateHelper.GenerateBarCode(current, Type);
+                        GenerateHelper.Zebra_5_2_5_Portrait(current, Type);
                         // Update the last indexed file
                         lastIndexofFile = current;
                         lastIndexedFileText.Text = $"* Last File: {lastIndexofFile}";
@@ -358,56 +379,7 @@ namespace Barcode_Generator
             }
         }
 
-        /*
-private void GenerateBarCode(string data, string type)
-{
-   string imagePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Namaa.jpg");
-
-   if (type == "File")
-   {
-       PrintDocument pd = new PrintDocument();
-       pd.PrintPage += new PrintPageEventHandler(pd_PrintPage);
-       pd.Print();
-
-       void pd_PrintPage(object sender, PrintPageEventArgs ev)
-       {
-           Font Threeofnine = new Font("Free 3 of 9 Extended", 31, System.Drawing.FontStyle.Regular, GraphicsUnit.Point);
-           Font printFont1 = new Font("Times New Roman", 12, System.Drawing.FontStyle.Bold);
-           Font Item = new Font("Times New Roman", 16, System.Drawing.FontStyle.Bold);
-           System.Drawing.Image img = System.Drawing.Image.FromFile(imagePath);
-
-           SolidBrush br = new SolidBrush(System.Drawing.Color.Black);
-
-           ev.Graphics.DrawImage(img, 170, 12, 70, 27);
-           ev.Graphics.DrawString("*" + data + "*", Threeofnine, br, 130, 45);
-           ev.Graphics.DrawString(data, printFont1, br, 175, 80);
-       }
-   }
-
-   if (type == "Box")
-   {
-       PrintDocument pd = new PrintDocument();
-       pd.PrintPage += new PrintPageEventHandler(pd_PrintPage);
-       pd.Print();
-
-       void pd_PrintPage(object sender, PrintPageEventArgs ev)
-       {
-           Font Threeofnine = new Font("Free 3 of 9 Extended", 60, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-           Font printFont1 = new Font("Times New Roman", 16, System.Drawing.FontStyle.Bold);
-           System.Drawing.Image img = System.Drawing.Image.FromFile(imagePath);
-
-           SolidBrush br = new SolidBrush(System.Drawing.Color.Black);
-
-
-           ev.Graphics.DrawImage(img, 160, 125, 130, 45);
-           //ev.Graphics.DrawString("Box", Item, br, 220, 135);
-           ev.Graphics.DrawString("*" + data + "*", Threeofnine, br, 70, 175);
-           ev.Graphics.DrawString(data, printFont1, br, 165, 240);
-           ev.Graphics.DrawString("E-Bank", printFont1, br, 165, 270);
-       }
-   }
-}
-*/
+    
     }
 }
 

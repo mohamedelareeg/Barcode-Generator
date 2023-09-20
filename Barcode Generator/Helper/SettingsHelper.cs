@@ -7,8 +7,9 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using Barcode_Generator.Model;
 
-namespace Barcode_Generator
+namespace Barcode_Generator.Helper
 {
     public static class SettingsHelper
     {
@@ -275,7 +276,7 @@ namespace Barcode_Generator
 
             try
             {
-                using (System.Management.ManagementObjectSearcher searcher = new System.Management.ManagementObjectSearcher("SELECT * FROM SoftwareLicensingService"))
+                using (ManagementObjectSearcher searcher = new ManagementObjectSearcher("SELECT * FROM SoftwareLicensingService"))
                 {
                     ManagementObjectCollection objCollection = searcher.Get();
                     foreach (ManagementObject obj in objCollection)

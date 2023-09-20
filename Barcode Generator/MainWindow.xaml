@@ -133,11 +133,13 @@
                                         <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="20">
                                             <TextBlock Text="Choose File or Box" Foreground="Red" Margin="0,0,0,5"/>
                                             <ComboBox  Style="{StaticResource CustomComboBoxStyle}" x:Name="typeComboBox" Width="150" Height="40" Margin="0,0,0,10">
-                                                <ComboBoxItem Content="Box" IsSelected="True"/>
+                                            <ComboBoxItem Content="Asset" IsSelected="True"/>
+                                            <ComboBoxItem Content="Box"/>
                                                 <ComboBoxItem Content="File"/>
                                             </ComboBox>
                                         </StackPanel>
                                     <StackPanel Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,20">
+                                        <TextBlock x:Name="lastIndexedAssetText" Foreground="Red" Margin="0,5"/>
                                         <TextBlock x:Name="lastIndexedBoxText" Foreground="Red" Margin="0,5"/>
                                         <TextBlock x:Name="lastIndexedFileText" Foreground="Red"/>
                                         <TextBlock x:Name="RemainCount" Foreground="Red"/>
