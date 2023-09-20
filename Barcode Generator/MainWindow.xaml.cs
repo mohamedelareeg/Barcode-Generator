@@ -1,4 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Barcode_Generator.Context;
+using Barcode_Generator.Helper;
+using Barcode_Generator.Model;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Win32;
 using OfficeOpenXml;
 using System;
@@ -25,6 +28,7 @@ using System.Windows.Shapes;
 using ZXing;
 using ZXing.Common;
 using ZXing.QrCode;
+using ZXing.QrCode.Internal;
 using ZXing.Windows.Compatibility;
 
 namespace Barcode_Generator
@@ -37,10 +41,69 @@ namespace Barcode_Generator
         private string lastIndexofBox = "";
         private string lastIndexofFile = "";
         private LogEntryContext _context;
+        private AppSettings appSettings;
         public MainWindow()
         {
             _context = new LogEntryContext();
             InitializeComponent();
+            appSettings = SettingsHelper.LoadAppSettings();
+            // Check device identifier and license expiration
+            if (string.IsNullOrEmpty(appSettings.DeviceIdentifier))
+            {
+                // Show a dialog to enter a serial number
+                var serialNumberDialog = new SerialNumberDialog();
+                if (serialNumberDialog.ShowDialog() == true)
+                {
+                    string enteredSerialNumber = serialNumberDialog.SerialNumber;
+
+                    
+                    if (enteredSerialNumber == "PY7CV-F8ZSF-FV5YT-F8ZHC-FY8TW")
+                    {
+                        appSettings.MaxBarcodePrints = 1000;
+                        appSettings.DeviceIdentifier = SettingsHelper.GenerateDeviceIdentifier();
+                        appSettings.LicenseExpirationDate = DateTime.Now.AddYears(1);
+                        SettingsHelper.SaveAppSettings(appSettings);
+                    }
+                    else
+                    {
+                        // Invalid serial number, show an error message and exit the application
+                        MessageBox.Show("Invalid serial number. Please enter a valid serial number to use the application.", "Serial Number Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        Environment.Exit(0);
+                    }
+                }
+                else
+                {
+                    // User canceled the dialog, exit the application
+                    Environment.Exit(0);
+                }
+            }
+            appSettings = SettingsHelper.LoadAppSettings();
+            string generatedDeviceIdentifier = SettingsHelper.GenerateDeviceIdentifier();
+
+            if (appSettings.DeviceIdentifier == generatedDeviceIdentifier)
+            {
+                DateTime currentDate = DateTime.Now;
+
+                if (currentDate < appSettings.LicenseExpirationDate)
+                {
+                    // The device identifier matches the saved one, and the license is still valid
+                    // You can continue with the application logic here
+                }
+                else
+                {
+                    // The license has expired
+                    // Show an alert to the user and then force shut down the application
+                    MessageBox.Show("Your license has expired. Please renew your license to continue using the application.", "License Expiration", MessageBoxButton.OK, MessageBoxImage.Error);
+                    Environment.Exit(0); // Terminate the application
+                }
+            }
+            else
+            {
+                // The device identifier has changed
+                // Show an alert to the user and then force shut down the application
+                MessageBox.Show("The application cannot be run on this device. Please contact support for assistance.", "Device Identifier Mismatch", MessageBoxButton.OK, MessageBoxImage.Error);
+                Environment.Exit(0); // Terminate the application
+            }
             UpdateLastIndexes();
         }
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
@@ -74,257 +137,152 @@ namespace Barcode_Generator
 
             lastIndexedBoxText.Text = $"* Last Box: {lastIndexofBox}";
             lastIndexedFileText.Text = $"* Last File: {lastIndexofFile}";
+            RemainCount.Text = $"* Remain: {appSettings.MaxBarcodePrints - appSettings.UsedBarcodePrints}";
         }
 
         private void GenerateButton_Click(object sender, RoutedEventArgs e)
         {
-            string barcode = barCodeTextBox.Text.Trim();
-            string type = (typeComboBox.SelectedItem as ComboBoxItem)?.Content.ToString();
 
-            if (string.IsNullOrWhiteSpace(barcode))
+            if (appSettings.UsedBarcodePrints < appSettings.MaxBarcodePrints)
             {
-                barcodeErrorText.Text = "Please enter a count.";
-                return;
-            }
+                string barcode = barCodeTextBox.Text.Trim();
+                string type = (typeComboBox.SelectedItem as ComboBoxItem)?.Content.ToString();
 
-            if (!int.TryParse(barcode, out int count) || count <= 0)
+                if (string.IsNullOrWhiteSpace(barcode))
+                {
+                    barcodeErrorText.Text = "Please enter a count.";
+                    return;
+                }
+
+                if (!int.TryParse(barcode, out int count) || count <= 0)
+                {
+                    barcodeErrorText.Text = "Invalid count. Please enter a positive number.";
+                    return;
+                }
+
+                barcodeErrorText.Text = "";
+                GenerateBarCodeCount(barcode, type);
+                appSettings.UsedBarcodePrints = appSettings.UsedBarcodePrints + Int32.Parse(barcode);//Count
+                SettingsHelper.SaveAppSettings(appSettings);
+                appSettings = SettingsHelper.LoadAppSettings();
+                RemainCount.Text = $"* Remain: {appSettings.MaxBarcodePrints - appSettings.UsedBarcodePrints}";
+            }
+            else
             {
-                barcodeErrorText.Text = "Invalid count. Please enter a positive number.";
-                return;
+                MessageBox.Show("You have reached the maximum allowed barcode prints.");
             }
-
-            barcodeErrorText.Text = "";
-            GenerateBarCodeCount(barcode, type);
         }
         private void PrintButton_Click(object sender, RoutedEventArgs e)
         {
-            string start = startTextBox.Text.Trim();
-            string end = endTextBox.Text.Trim();
-
-            if (!int.TryParse(start, out int startIndex) || !int.TryParse(end, out int endIndex) || startIndex > endIndex)
+            if (appSettings.UsedBarcodePrints < appSettings.MaxBarcodePrints)
             {
-                barcodeErrorText.Text = "Invalid range. Please enter valid start and end indexes.";
-                return;
+                string start = startTextBox.Text.Trim();
+                string end = endTextBox.Text.Trim();
+
+                if (!int.TryParse(start, out int startIndex) || !int.TryParse(end, out int endIndex) || startIndex > endIndex)
+                {
+                    barcodeErrorText.Text = "Invalid range. Please enter valid start and end indexes.";
+                    return;
+                }
+
+                string type = (typeComboBox.SelectedItem as ComboBoxItem)?.Content.ToString();
+
+                barcodeErrorText.Text = "";
+
+                for (int i = startIndex; i <= endIndex; i++)
+                {
+                    GenerateHelper.GenerateBarCode(i.ToString().PadLeft(6, '0'), type);
+                    //GenerateBarCodeCount(i.ToString(), type);
+                }
+                int count = endIndex - startIndex;
+                appSettings.UsedBarcodePrints = appSettings.UsedBarcodePrints + count;//Count
+                SettingsHelper.SaveAppSettings(appSettings);
+                appSettings = SettingsHelper.LoadAppSettings();
+                RemainCount.Text = $"* Remain: {appSettings.MaxBarcodePrints - appSettings.UsedBarcodePrints}";
             }
-
-            string type = (typeComboBox.SelectedItem as ComboBoxItem)?.Content.ToString();
-
-            barcodeErrorText.Text = "";
-
-            for (int i = startIndex; i <= endIndex; i++)
+            else
             {
-                GenerateBarCode(i.ToString().PadLeft(6, '0'), type);
-                //GenerateBarCodeCount(i.ToString(), type);
+                MessageBox.Show("You have reached the maximum allowed barcode prints.");
             }
         }
 
         private async void GenerateBarCodeCount(string Count, string Type)
         {
-            if (string.IsNullOrEmpty(Count))
-            {
-                return;
-            }
 
-            var MaxNumof = await _context.maxnumOfFileAndBoxes.FirstOrDefaultAsync(m => m.Id == 1);
-            if (MaxNumof == null)
-            {
-                MaxnumOfFileAndBox maxnumOfFileAndBox = new MaxnumOfFileAndBox();
-                maxnumOfFileAndBox.MaxNumOfFile = "0000000";
-                maxnumOfFileAndBox.MaxNumOfBox = "000000";
-                _context.maxnumOfFileAndBoxes.Add(maxnumOfFileAndBox);
-                _context.SaveChanges();
-            }
-
-            if (Type == "Box")
-            {
-                var Max = await _context.maxnumOfFileAndBoxes.FirstOrDefaultAsync(m => m.Id == 1);
-                int.TryParse(Max.MaxNumOfBox, out int intmaxofbox);
-                int.TryParse(Count, out int plus);
-                int end = intmaxofbox + plus;
-                for (int i = intmaxofbox + 1; i <= end; i++)
+                if (string.IsNullOrEmpty(Count))
                 {
-                    string current = i.ToString().PadLeft(6, '0');
-                    Max.MaxNumOfBox = current;
-                    _context.maxnumOfFileAndBoxes.Update(Max);
-                    GenerateBarCode(current, Type);
-                    // Update the last indexed box
-                    lastIndexofBox = current;
-                    lastIndexedBoxText.Text = $"* Last Box: {lastIndexofBox}";
+                    return;
                 }
-                await _context.SaveChangesAsync();
-            }
 
-            if (Type == "File")
-            {
-                var Max = await _context.maxnumOfFileAndBoxes.FirstOrDefaultAsync(m => m.Id == 1);
-                int.TryParse(Max.MaxNumOfFile, out int intmaxoffile);
-                int.TryParse(Count, out int plus);
-                int end = intmaxoffile + plus;
-                for (int i = intmaxoffile + 1; i <= end; i++)
+                var MaxNumof = await _context.maxnumOfFileAndBoxes.FirstOrDefaultAsync(m => m.Id == 1);
+                if (MaxNumof == null)
                 {
-                    string current = i.ToString().PadLeft(7, '0');
-                    Max.MaxNumOfFile = current;
-                    _context.maxnumOfFileAndBoxes.Update(Max);
-                    GenerateBarCode(current, Type);
-                    // Update the last indexed file
-                    lastIndexofFile = current;
-                    lastIndexedFileText.Text = $"* Last File: {lastIndexofFile}";
+                    MaxnumOfFileAndBox maxnumOfFileAndBox = new MaxnumOfFileAndBox();
+                    maxnumOfFileAndBox.MaxNumOfFile = "0000000";
+                    maxnumOfFileAndBox.MaxNumOfBox = "000000";
+                    _context.maxnumOfFileAndBoxes.Add(maxnumOfFileAndBox);
+                    _context.SaveChanges();
                 }
-                await _context.SaveChangesAsync();
-            }
+
+                if (Type == "Box")
+                {
+                    var Max = await _context.maxnumOfFileAndBoxes.FirstOrDefaultAsync(m => m.Id == 1);
+                    int.TryParse(Max.MaxNumOfBox, out int intmaxofbox);
+                    int.TryParse(Count, out int plus);
+                    int end = intmaxofbox + plus;
+                    for (int i = intmaxofbox + 1; i <= end; i++)
+                    {
+                        string current = i.ToString().PadLeft(6, '0');
+                        Max.MaxNumOfBox = current;
+                        _context.maxnumOfFileAndBoxes.Update(Max);
+                        GenerateHelper.GenerateBarCode(current, Type);
+                        // Update the last indexed box
+                        lastIndexofBox = current;
+                        lastIndexedBoxText.Text = $"* Last Box: {lastIndexofBox}";
+                    }
+                    await _context.SaveChangesAsync();
+                }
+
+                if (Type == "File")
+                {
+                    var Max = await _context.maxnumOfFileAndBoxes.FirstOrDefaultAsync(m => m.Id == 1);
+                    int.TryParse(Max.MaxNumOfFile, out int intmaxoffile);
+                    int.TryParse(Count, out int plus);
+                    int end = intmaxoffile + plus;
+                    for (int i = intmaxoffile + 1; i <= end; i++)
+                    {
+                        string current = i.ToString().PadLeft(7, '0');
+                        Max.MaxNumOfFile = current;
+                        _context.maxnumOfFileAndBoxes.Update(Max);
+                        GenerateHelper.GenerateBarCode(current, Type);
+                        // Update the last indexed file
+                        lastIndexofFile = current;
+                        lastIndexedFileText.Text = $"* Last File: {lastIndexofFile}";
+                    }
+                    await _context.SaveChangesAsync();
+                }
+             
+
+           
 
             // Redirect to another page or handle as needed
         }
-        private void GenerateTextBarcode(string data , bool showBarcode , bool isShowImg)
-        {
-            string imagePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Namaa.jpg");
-
-            PrintDocument pd = new PrintDocument();
-            pd.PrintPage += new PrintPageEventHandler(pd_PrintPage);
-            pd.Print();
-
-            void pd_PrintPage(object sender, PrintPageEventArgs ev)
-            {
-
-                // Center the image horizontally
-                // Center the image horizontally
-                int centerX = (ev.MarginBounds.Left + ev.MarginBounds.Right) / 2;
-                System.Drawing.Image img = System.Drawing.Image.FromFile(imagePath);
-
-                SolidBrush br = new SolidBrush(System.Drawing.Color.Black);
-
-                if (isShowImg)
-                {
-                    ev.Graphics.DrawImage(img, 140, 160, 120, 30);
-                }
-                if (showBarcode)
-                {
-                    // Generate barcode using ZXing.Net
-                    BarcodeWriter barcodeWriter = new BarcodeWriter();
-                    barcodeWriter.Format = BarcodeFormat.CODE_128;
-                    barcodeWriter.Options = new EncodingOptions
-                    {
-                        Width = 100,
-                        Height = 30,
-                        PureBarcode = true
-                    };
-                    System.Drawing.Image barcodeImage = barcodeWriter.Write(data);
-
-                    // Adjust the position to fit the label
-                    int barcodeX = centerX - (barcodeImage.Width / 2) - 20;
-                    int barcodeY = 195; // Adjust the vertical position as needed
-
-                    ev.Graphics.DrawImage(barcodeImage, barcodeX, barcodeY, barcodeImage.Width, barcodeImage.Height);
-                    //ev.Graphics.DrawImage(barcodeImage, 145, 185);
-
-
-                    // Adjust the position to fit the label
-                    int textX = centerX - (barcodeImage.Width / 2); // You may need to adjust the offset
-                    int textY = 230; // Adjust the vertical position as needed
-                }
-
-                //ev.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
-                //ev.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-                //ev.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixel;
-                //ev.Graphics.Clear(System.Drawing.Color.White);
-                //ev.Graphics.SmoothingMode = SmoothingMode.None;
-
-                Font printFont1 = new Font("Times New Roman", 12, System.Drawing.FontStyle.Bold);
-                ev.Graphics.DrawString(data, printFont1, br, 150, 230);
-                
-                //ev.Graphics.DrawString("تم الفهرسة", printFont1, br, textX + 70, textY);
-            }
-        }
      
-
-        private void GenerateBarCode(string data, string type)
-        {
-            string imagePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Namaa.jpg");
-
-            if (type == "File")
-            {
-                PrintDocument pd = new PrintDocument();
-                pd.PrintPage += new PrintPageEventHandler(pd_PrintPage);
-                pd.Print();
-
-                void pd_PrintPage(object sender, PrintPageEventArgs ev)
-                {
-
-                    // Center the image horizontally
-                    int centerX = (ev.MarginBounds.Left + ev.MarginBounds.Right) / 2;
-                    System.Drawing.Image img = System.Drawing.Image.FromFile(imagePath);
-
-                    SolidBrush br = new SolidBrush(System.Drawing.Color.Black);
-
-                    ev.Graphics.DrawImage(img, 150, 160, 120, 30);
-
-                    // Generate barcode using ZXing.Net
-                    BarcodeWriter barcodeWriter = new BarcodeWriter();
-                    barcodeWriter.Format = BarcodeFormat.CODE_39;
-                    barcodeWriter.Options = new EncodingOptions
-                    {
-                        Width = 100,
-                        Height = 30,
-                        PureBarcode = true
-                    };
-                    System.Drawing.Image barcodeImage = barcodeWriter.Write(data);
-
-                    // Adjust the position to fit the label
-                    int barcodeX = centerX - (barcodeImage.Width / 2) - 10;
-                    int barcodeY = 195; // Adjust the vertical position as needed
-
-                    ev.Graphics.DrawImage(barcodeImage, barcodeX, barcodeY, barcodeImage.Width, barcodeImage.Height);
-                    //ev.Graphics.DrawImage(barcodeImage, 145, 185);
-
-                    Font printFont1 = new Font("Times New Roman", 12, System.Drawing.FontStyle.Bold);
-
-                    // Adjust the position to fit the label
-                    int textX = centerX - (barcodeImage.Width / 2); // You may need to adjust the offset
-                    int textY = 230; // Adjust the vertical position as needed
-
-                    ev.Graphics.DrawString(data, printFont1, br, textX, textY);
-                    ev.Graphics.DrawString("تم الفهرسة", printFont1, br, textX + 70, textY);
-                }
-            }
-
-
-            if (type == "Box")
-            {
-                PrintDocument pd = new PrintDocument();
-                pd.PrintPage += new PrintPageEventHandler(pd_PrintPage);
-                pd.Print();
-
-                void pd_PrintPage(object sender, PrintPageEventArgs ev)
-                {
-                    System.Drawing.Image img = System.Drawing.Image.FromFile(imagePath);
-
-                    SolidBrush br = new SolidBrush(System.Drawing.Color.Black);
-                    SolidBrush darkerBrush = new SolidBrush(System.Drawing.Color.Black); 
-                    ev.Graphics.DrawImage(img, 160, 125, 130, 45);
-
-
-                    // Generate barcode using ZXing.Net
-                    BarcodeWriter barcodeWriter = new BarcodeWriter();
-                    barcodeWriter.Format = BarcodeFormat.CODE_39;
-                    barcodeWriter.Options = new EncodingOptions
-                    {
-                        Width = 380,
-                        Height = 70,
-                        PureBarcode = true
-                    };     
-                    Font printFont1 = new Font("Times New Roman", 16, System.Drawing.FontStyle.Bold);
-                    System.Drawing.Image barcodeImage = barcodeWriter.Write(data);
-                    ev.Graphics.DrawImage(barcodeImage, 20, 180);
-
-                    ev.Graphics.DrawString(data, printFont1, br, 165, 260);
-                    //ev.Graphics.DrawString("E-Bank", printFont1, br, 165, 270);
-                }
-            }
-        }
 
         private void GenerateTextButton_Click(object sender, RoutedEventArgs e)
         {
-            GenerateTextBarcode(InputbarCodeTextBox.Text , (bool)InputBarcodeCheckBox.IsChecked , (bool)InputBarcodeImgCheckBox.IsChecked);
+            if (appSettings.UsedBarcodePrints < appSettings.MaxBarcodePrints)
+            {
+                GenerateHelper.GenerateTextBarcode(InputbarCodeTextBox.Text , (bool)InputBarcodeCheckBox.IsChecked , (bool)InputBarcodeImgCheckBox.IsChecked);
+                appSettings.UsedBarcodePrints = appSettings.UsedBarcodePrints + 1;//Count
+                SettingsHelper.SaveAppSettings(appSettings);
+                appSettings = SettingsHelper.LoadAppSettings();
+                RemainCount.Text = $"* Remain: {appSettings.MaxBarcodePrints - appSettings.UsedBarcodePrints}";
+            }
+            else
+            {
+                MessageBox.Show("You have reached the maximum allowed barcode prints.");
+            }
         }
         private void UploadExcelButton_Click(object sender, RoutedEventArgs e)
         {
@@ -346,15 +304,25 @@ namespace Barcode_Generator
             {
                 ExcelWorksheet worksheet = package.Workbook.Worksheets[0];
                 int rowCount = worksheet.Dimension.Rows;
-
-                for (int row = 2; row <= rowCount; row++) 
+                if (appSettings.UsedBarcodePrints < appSettings.MaxBarcodePrints)
                 {
-                    string barcodeValue = worksheet.Cells[row, 1].Value?.ToString();
-
-                    if (!string.IsNullOrEmpty(barcodeValue))
+                    for (int row = 2; row <= rowCount; row++)
                     {
-                        GenerateTextBarcode(barcodeValue, (bool)InputBarcodeCheckBox.IsChecked, (bool)InputBarcodeImgCheckBox.IsChecked); 
+                        string barcodeValue = worksheet.Cells[row, 1].Value?.ToString();
+
+                        if (!string.IsNullOrEmpty(barcodeValue))
+                        {
+                            GenerateHelper.GenerateTextBarcode(barcodeValue, (bool)InputBarcodeCheckBox.IsChecked, (bool)InputBarcodeImgCheckBox.IsChecked);
+                        }
                     }
+                    appSettings.UsedBarcodePrints = appSettings.UsedBarcodePrints + rowCount;//Count
+                    SettingsHelper.SaveAppSettings(appSettings);
+                    appSettings = SettingsHelper.LoadAppSettings();
+                    RemainCount.Text = $"* Remain: {appSettings.MaxBarcodePrints - appSettings.UsedBarcodePrints}";
+                }
+                else
+                {
+                    MessageBox.Show("You have reached the maximum allowed barcode prints.");
                 }
             }
         }

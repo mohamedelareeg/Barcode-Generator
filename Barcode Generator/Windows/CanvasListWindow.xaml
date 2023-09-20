@@ -1,4 +1,4 @@
-﻿<Window x:Class="Barcode_Generator.BarcodeDesigner"
+﻿<Window x:Class="Barcode_Generator.CanvasListWindow"
          xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -97,7 +97,7 @@
                                 <RowDefinition Height="*"/>
                                 <RowDefinition Height="550"/>
                             </Grid.RowDefinitions>
-                            <local:WindowHeader Grid.Row="0" HeaderTitle="Barcode Designer"/>
+                            <local:WindowHeader Grid.Row="0" HeaderTitle="Barcode Templates"/>
 
                             <Border Grid.Row="1" Margin="20" Background="White" CornerRadius="10">
                                 <Grid>
@@ -107,41 +107,23 @@
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
 
-                                    <ListBox Grid.Column="0" x:Name="toolboxListBox" SelectionChanged="ToolboxListBox_SelectionChanged">
-                                        <ListBox.Resources>
-                                            <Style TargetType="{x:Type ListBoxItem}">
-                                                <EventSetter Event="PreviewMouseLeftButtonDown" Handler="ListBoxItem_PreviewMouseLeftButtonDown"/>
-                                                <EventSetter Event="PreviewMouseMove" Handler="ListBoxItem_PreviewMouseMove"/>
-                                            </Style>
-                                        </ListBox.Resources>
-                                        <ListBoxItem>
-                                            <Image Source="/Assets/text.png" Width="50" Margin="10" Tag="Text" />
-                                        </ListBoxItem>
-                                        <ListBoxItem>
-                                            <Image Source="/Assets/barcode.png" Width="50" Margin="10" Tag="Barcode" />
-                                        </ListBoxItem>
-                                        <ListBoxItem>
-                                            <Image Source="/Assets/photo.png" Width="50" Margin="10" Tag="Image" />
-                                        </ListBoxItem>
+                                    <ListBox Grid.Column="0" x:Name="canvasListBox" DisplayMemberPath="FileName" SelectionChanged="CanvasListBox_SelectionChanged">
                                     </ListBox>
 
                                     <!-- Canvas (Column 1) -->
-                                    <Canvas Grid.Column="1" Name="designCanvas" AllowDrop="True" Drop="designCanvas_Drop"
-        PreviewMouseLeftButtonDown="DesignCanvas_MouseDown" PreviewMouseMove="DesignCanvas_MouseMove"
-        PreviewMouseLeftButtonUp="DesignCanvas_MouseUp" DragEnter="designCanvas_DragEnter" Background="FloralWhite">
+                                    <Canvas Grid.Column="1" Name="canvasPreview" Background="White">
                                         <!-- Canvas content will be dynamically added -->
                                     </Canvas>
 
 
                                     <!-- Properties Panel (Column 2) -->
-                                    <StackPanel Grid.Column="2">
-                                        <TextBlock Text="Properties" Margin="5"/>
-                                        <!-- Property controls will be dynamically added/updated based on selected element -->
+                                    <StackPanel  x:Name="propertiesStackPanel" Grid.Column="2">
+                                        <Button Content="Print Selected Canvas" Click="PrintButton_Click" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="10"/>
                                     </StackPanel>
                                 </Grid>
                             </Border>
 
-
+                         
                         </Grid>
                     </ScrollViewer>
                 </Border>

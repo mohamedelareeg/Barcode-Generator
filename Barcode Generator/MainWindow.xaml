@@ -140,6 +140,7 @@
                                     <StackPanel Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,20">
                                         <TextBlock x:Name="lastIndexedBoxText" Foreground="Red" Margin="0,5"/>
                                         <TextBlock x:Name="lastIndexedFileText" Foreground="Red"/>
+                                        <TextBlock x:Name="RemainCount" Foreground="Red"/>
                                     </StackPanel>
                                 </Grid>
                                 </Border>
