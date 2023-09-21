@@ -56,12 +56,12 @@ namespace Barcode_Generator.Helper
 
                 // Generate barcode using ZXing.Net
                 BarcodeWriter barcodeWriter = new BarcodeWriter();
-                barcodeWriter.Format = BarcodeFormat.CODE_39;
+                barcodeWriter.Format = BarcodeFormat.CODE_128;
                 barcodeWriter.Options = new EncodingOptions
                 {
                     Width = (int)(printableAreaWidth * 0.6f), // Adjust as needed
                     Height = (int)(printableAreaHeight * 0.2f), // Adjust as needed
-                    Margin = 80, // No margin
+                    Margin = 40, // No margin
                     PureBarcode = true,
 
                 };
@@ -189,7 +189,7 @@ namespace Barcode_Generator.Helper
 
                     // Generate barcode using ZXing.Net
                     BarcodeWriter barcodeWriter = new BarcodeWriter();
-                    barcodeWriter.Format = BarcodeFormat.CODE_39;
+                    barcodeWriter.Format = BarcodeFormat.CODE_128;
                     barcodeWriter.Options = new EncodingOptions
                     {
                         Width = 100,
@@ -234,7 +234,7 @@ namespace Barcode_Generator.Helper
 
                     // Generate barcode using ZXing.Net
                     BarcodeWriter barcodeWriter = new BarcodeWriter();
-                    barcodeWriter.Format = BarcodeFormat.CODE_39;
+                    barcodeWriter.Format = BarcodeFormat.CODE_128;
                     barcodeWriter.Options = new EncodingOptions
                     {
                         Width = 380,
@@ -291,12 +291,12 @@ namespace Barcode_Generator.Helper
 
                 // Generate barcode using ZXing.Net
                 BarcodeWriter barcodeWriter = new BarcodeWriter();
-                barcodeWriter.Format = BarcodeFormat.CODE_39;
+                barcodeWriter.Format = BarcodeFormat.CODE_128;
                 barcodeWriter.Options = new EncodingOptions
                 {
-                    Width = (int)(printableAreaWidth * 0.2f), // Adjust as needed
-                    Height = (int)(printableAreaHeight * 0.1f), // Adjust as needed
-                    Margin = 50, // No margin
+                    Width = (int)(printableAreaWidth * 0.6f), // Adjust as needed
+                    Height = (int)(printableAreaHeight * 0.2f), // Adjust as needed
+                    Margin = 40, // No margin
                     PureBarcode = true,
 
                 };
@@ -367,7 +367,7 @@ namespace Barcode_Generator.Helper
 
                 // Generate barcode using ZXing.Net
                 BarcodeWriter barcodeWriter = new BarcodeWriter();
-                barcodeWriter.Format = BarcodeFormat.CODE_39;
+                barcodeWriter.Format = BarcodeFormat.CODE_128;
                 barcodeWriter.Options = new EncodingOptions
                 {
                     Width = 100,
