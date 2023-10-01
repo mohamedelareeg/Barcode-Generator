@@ -41,6 +41,7 @@ namespace Barcode_Generator
         private string lastIndexofAsset = "";
         private string lastIndexofBox = "";
         private string lastIndexofFile = "";
+        private string lastIndexofDocument = "";
         private LogEntryContext _context;
         private AppSettings appSettings;
         public MainWindow()
@@ -105,8 +106,49 @@ namespace Barcode_Generator
                 MessageBox.Show("The application cannot be run on this device. Please contact support for assistance.", "Device Identifier Mismatch", MessageBoxButton.OK, MessageBoxImage.Error);
                 Environment.Exit(0); // Terminate the application
             }
+            PopulatePrinterComboBox();
             UpdateLastIndexes();
         }
+        private void PopulatePrinterComboBox()
+        {
+            var printerComboBox = FindName("printerComboBox") as ComboBox;
+
+            if (printerComboBox != null)
+            {
+                var installedPrinters = GetInstalledBarcodePrinters();
+                foreach (var printerName in installedPrinters)
+                {
+                    printerComboBox.Items.Add(printerName);
+                }
+            }
+        }
+        public List<string> GetInstalledBarcodePrinters()
+        {
+            List<string> printerNames = new List<string>();
+
+            PrinterSettings.StringCollection printers = PrinterSettings.InstalledPrinters;
+
+            foreach (string printerName in printers)
+            {
+                if (IsBarcodePrinter(printerName))
+                {
+                    printerNames.Add(printerName);
+                }
+            }
+
+            return printerNames;
+        }
+        private bool IsBarcodePrinter(string printerName)
+        {
+            if (printerName.Contains("Zebra", StringComparison.OrdinalIgnoreCase) ||
+                printerName.Contains("Honeywell", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+            return false;
+        }
+
+
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.LeftButton == MouseButtonState.Pressed)
@@ -129,17 +171,20 @@ namespace Barcode_Generator
             lastIndexofBox = "0";
             lastIndexofFile = "0";
             lastIndexofAsset = "0";
+            lastIndexofDocument = "0";
             var MaxNumof = await _context.maxnumOfFileAndBoxes.FirstOrDefaultAsync(m => m.Id == 1);
             if (MaxNumof != null)
             {
 
                 lastIndexofBox = MaxNumof.MaxNumOfBox;
                 lastIndexofFile = MaxNumof.MaxNumOfFile;
+                lastIndexofDocument = MaxNumof.MaxNumOfDocument;
                 lastIndexofAsset = MaxNumof.MaxNumOfAsset;
             }
             lastIndexedAssetText.Text = $"* Last Asset: {lastIndexofAsset}";
             lastIndexedBoxText.Text = $"* Last Box: {lastIndexofBox}";
             lastIndexedFileText.Text = $"* Last File: {lastIndexofFile}";
+            lastIndexedDocumentText.Text = $"* Last Document: {lastIndexofDocument}";
             RemainCount.Text = $"* Remain: {appSettings.MaxBarcodePrints - appSettings.UsedBarcodePrints}";
         }
 
@@ -162,9 +207,9 @@ namespace Barcode_Generator
                     barcodeErrorText.Text = "Invalid count. Please enter a positive number.";
                     return;
                 }
-
+                string selectedPrinter = printerComboBox.SelectedValue as string;
                 barcodeErrorText.Text = "";
-                GenerateBarCodeCount(barcode, type);
+                GenerateBarCodeCount(barcode, type , selectedPrinter);
                 appSettings.UsedBarcodePrints = appSettings.UsedBarcodePrints + Int32.Parse(barcode);//Count
                 SettingsHelper.SaveAppSettings(appSettings);
                 appSettings = SettingsHelper.LoadAppSettings();
@@ -192,11 +237,21 @@ namespace Barcode_Generator
 
                 barcodeErrorText.Text = "";
 
-                for (int i = startIndex; i <= endIndex; i++)
+                string selectedPrinter = printerComboBox.SelectedValue as string;
+                //GenerateHelper.GenerateBarCode(i.ToString().PadLeft(6, '0'), type);
+                switch (selectedPrinter)
                 {
-                    GenerateHelper.GenerateBarCode(i.ToString().PadLeft(6, '0'), type);
-                    //GenerateBarCodeCount(i.ToString(), type);
+                    case "Honeywell PC42t plus (203 dpi)":
+                        HandleHoneywellPrinterFromTo(start , end, type);
+                        break;
+                    case "Zebra ZD220 (203 dpi) - ZPL":
+                        HandleZebraPrinterFromTo(start , end, type);
+                        break;
+                    default:
+
+                        break;
                 }
+           
                 int count = endIndex - startIndex;
                 appSettings.UsedBarcodePrints = appSettings.UsedBarcodePrints + count;//Count
                 SettingsHelper.SaveAppSettings(appSettings);
@@ -209,10 +264,13 @@ namespace Barcode_Generator
             }
         }
 
-        private async void GenerateBarCodeCount(string Count, string Type)
+        private async void GenerateBarCodeCount(string Count, string Type , string Printer)
         {
 
-                if (string.IsNullOrEmpty(Count))
+            //Honeywell PC42t plus (203 dpi)
+            //Zebra ZD220 (203 dpi) - ZPL
+
+            if (string.IsNullOrEmpty(Count))
                 {
                     return;
                 }
@@ -224,71 +282,330 @@ namespace Barcode_Generator
                     maxnumOfFileAndBox.MaxNumOfFile = "0000000";
                     maxnumOfFileAndBox.MaxNumOfBox = "000000";
                 maxnumOfFileAndBox.MaxNumOfAsset = "000000";
+                maxnumOfFileAndBox.MaxNumOfDocument = "00000000";
                 _context.maxnumOfFileAndBoxes.Add(maxnumOfFileAndBox);
                     _context.SaveChanges();
                 }
-                if (Type == "Asset")
-                {
-                    var Max = await _context.maxnumOfFileAndBoxes.FirstOrDefaultAsync(m => m.Id == 1);
-                    int.TryParse(Max.MaxNumOfAsset, out int intmaxofbox);
-                    int.TryParse(Count, out int plus);
-                    int end = intmaxofbox + plus;
-                    for (int i = intmaxofbox + 1; i <= end; i++)
-                    {
-                        string current = i.ToString().PadLeft(6, '0');
-                        Max.MaxNumOfAsset = current;
-                        _context.maxnumOfFileAndBoxes.Update(Max);
-                        GenerateHelper.Zebra_5_5_Landscape(current, Type);
-                        // Update the last indexed box
-                        lastIndexofAsset = current;
-                        lastIndexedAssetText.Text = $"* Last Asset: {lastIndexofAsset}";
-                    }
-                    await _context.SaveChangesAsync();
-                }
-                if (Type == "Box")
-                    {
-                        var Max = await _context.maxnumOfFileAndBoxes.FirstOrDefaultAsync(m => m.Id == 1);
-                        int.TryParse(Max.MaxNumOfBox, out int intmaxofbox);
-                        int.TryParse(Count, out int plus);
-                        int end = intmaxofbox + plus;
-                        for (int i = intmaxofbox + 1; i <= end; i++)
-                        {
-                            string current = i.ToString().PadLeft(6, '0');
-                            Max.MaxNumOfBox = current;
-                            _context.maxnumOfFileAndBoxes.Update(Max);
-                            GenerateHelper.Zebra_5_5_Landscape(current, Type);
-                            // Update the last indexed box
-                            lastIndexofBox = current;
-                            lastIndexedBoxText.Text = $"* Last Box: {lastIndexofBox}";
-                        }
-                        await _context.SaveChangesAsync();
-                }
+            switch (Printer)
+            {
+                case "Honeywell PC42t plus (203 dpi)":
+                    HandleHoneywellPrinter(Count, Type);
+                    break;
+                case "Zebra ZD220 (203 dpi) - ZPL":
+                    HandleZebraPrinter(Count, Type);
+                    break;
+                default:
+                    
+                    break;
+            }
 
-                if (Type == "File")
-                {
-                    var Max = await _context.maxnumOfFileAndBoxes.FirstOrDefaultAsync(m => m.Id == 1);
-                    int.TryParse(Max.MaxNumOfFile, out int intmaxoffile);
-                    int.TryParse(Count, out int plus);
-                    int end = intmaxoffile + plus;
-                    for (int i = intmaxoffile + 1; i <= end; i++)
-                    {
-                        string current = i.ToString().PadLeft(7, '0');
-                        Max.MaxNumOfFile = current;
-                        _context.maxnumOfFileAndBoxes.Update(Max);
-                        GenerateHelper.Zebra_5_2_5_Portrait(current, Type);
-                        // Update the last indexed file
-                        lastIndexofFile = current;
-                        lastIndexedFileText.Text = $"* Last File: {lastIndexofFile}";
-                    }
-                    await _context.SaveChangesAsync();
-                }
-             
-
-           
-
-            // Redirect to another page or handle as needed
         }
-     
+        private async void HandleHoneywellPrinter(string Count, string Type)
+        {
+            if (Type == "Asset")
+            {
+                var Max = await _context.maxnumOfFileAndBoxes.FirstOrDefaultAsync(m => m.Id == 1);
+                int.TryParse(Max.MaxNumOfAsset, out int intmaxofbox);
+                int.TryParse(Count, out int plus);
+                int end = intmaxofbox + plus;
+                for (int i = intmaxofbox + 1; i <= end; i++)
+                {
+                    string current = i.ToString().PadLeft(6, '0');
+                    Max.MaxNumOfAsset = current;
+                    _context.maxnumOfFileAndBoxes.Update(Max);
+                    GenerateHelper.Zebra_5_5_Landscape(current, Type);//TODO
+                    // Update the last indexed box
+                    lastIndexofAsset = current;
+                    lastIndexedAssetText.Text = $"* Last Asset: {lastIndexofAsset}";
+                }
+                await _context.SaveChangesAsync();
+            }
+            if (Type == "Box")
+            {
+                var Max = await _context.maxnumOfFileAndBoxes.FirstOrDefaultAsync(m => m.Id == 1);
+                int.TryParse(Max.MaxNumOfBox, out int intmaxofbox);
+                int.TryParse(Count, out int plus);
+                int end = intmaxofbox + plus;
+                for (int i = intmaxofbox + 1; i <= end; i++)
+                {
+                    string current = i.ToString().PadLeft(6, '0');
+                    Max.MaxNumOfBox = current;
+                    _context.maxnumOfFileAndBoxes.Update(Max);
+                    GenerateHelper.HoneyWell_5_10_landscape(current, Type);
+                    // Update the last indexed box
+                    lastIndexofBox = current;
+                    lastIndexedBoxText.Text = $"* Last Box: {lastIndexofBox}";
+                }
+                await _context.SaveChangesAsync();
+            }
+
+            if (Type == "File")
+            {
+                var Max = await _context.maxnumOfFileAndBoxes.FirstOrDefaultAsync(m => m.Id == 1);
+                int.TryParse(Max.MaxNumOfFile, out int intmaxoffile);
+                int.TryParse(Count, out int plus);
+                int end = intmaxoffile + plus;
+                for (int i = intmaxoffile + 1; i <= end; i++)
+                {
+                    string current = i.ToString().PadLeft(7, '0');
+                    Max.MaxNumOfFile = current;
+                    _context.maxnumOfFileAndBoxes.Update(Max);
+                    GenerateHelper.HoneyWell_5_2_5_portrait(current, Type);
+                    // Update the last indexed file
+                    lastIndexofFile = current;
+                    lastIndexedFileText.Text = $"* Last File: {lastIndexofFile}";
+                }
+                await _context.SaveChangesAsync();
+            }
+            if (Type == "Document")
+            {
+                var Max = await _context.maxnumOfFileAndBoxes.FirstOrDefaultAsync(m => m.Id == 1);
+                int.TryParse(Max.MaxNumOfDocument, out int intmaxoffile);
+                int.TryParse(Count, out int plus);
+                int end = intmaxoffile + plus;
+                for (int i = intmaxoffile + 1; i <= end; i++)
+                {
+                    string current = i.ToString().PadLeft(9, '0');
+                    Max.MaxNumOfDocument = current;
+                    _context.maxnumOfFileAndBoxes.Update(Max);
+                    GenerateHelper.HoneyWell_5_2_5_portrait(current, Type);
+                    // Update the last indexed file
+                    lastIndexofDocument = current;
+                    lastIndexedDocumentText.Text = $"* Last Document: {lastIndexofDocument}";
+                }
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        private async void HandleZebraPrinter(string Count, string Type)
+        {
+            if (Type == "Asset")
+            {
+                var Max = await _context.maxnumOfFileAndBoxes.FirstOrDefaultAsync(m => m.Id == 1);
+                int.TryParse(Max.MaxNumOfAsset, out int intmaxofbox);
+                int.TryParse(Count, out int plus);
+                int end = intmaxofbox + plus;
+                for (int i = intmaxofbox + 1; i <= end; i++)
+                {
+                    string current = i.ToString().PadLeft(6, '0');
+                    Max.MaxNumOfAsset = current;
+                    _context.maxnumOfFileAndBoxes.Update(Max);
+                    GenerateHelper.Zebra_5_5_Landscape(current, Type);
+                    // Update the last indexed box
+                    lastIndexofAsset = current;
+                    lastIndexedAssetText.Text = $"* Last Asset: {lastIndexofAsset}";
+                }
+                await _context.SaveChangesAsync();
+            }
+            if (Type == "Box")
+            {
+                var Max = await _context.maxnumOfFileAndBoxes.FirstOrDefaultAsync(m => m.Id == 1);
+                int.TryParse(Max.MaxNumOfBox, out int intmaxofbox);
+                int.TryParse(Count, out int plus);
+                int end = intmaxofbox + plus;
+                for (int i = intmaxofbox + 1; i <= end; i++)
+                {
+                    string current = i.ToString().PadLeft(6, '0');
+                    Max.MaxNumOfBox = current;
+                    _context.maxnumOfFileAndBoxes.Update(Max);
+                    GenerateHelper.HoneyWell_5_10_landscape(current, Type);//TODO
+                    // Update the last indexed box
+                    lastIndexofBox = current;
+                    lastIndexedBoxText.Text = $"* Last Box: {lastIndexofBox}";
+                }
+                await _context.SaveChangesAsync();
+            }
+
+            if (Type == "File")
+            {
+                var Max = await _context.maxnumOfFileAndBoxes.FirstOrDefaultAsync(m => m.Id == 1);
+                int.TryParse(Max.MaxNumOfFile, out int intmaxoffile);
+                int.TryParse(Count, out int plus);
+                int end = intmaxoffile + plus;
+                for (int i = intmaxoffile + 1; i <= end; i++)
+                {
+                    string current = i.ToString().PadLeft(7, '0');
+                    Max.MaxNumOfFile = current;
+                    _context.maxnumOfFileAndBoxes.Update(Max);
+                    GenerateHelper.Zebra_5_2_5_Portrait(current, Type);
+                    // Update the last indexed file
+                    lastIndexofFile = current;
+                    lastIndexedFileText.Text = $"* Last File: {lastIndexofFile}";
+                }
+                await _context.SaveChangesAsync();
+            }
+            if (Type == "Document")
+            {
+                var Max = await _context.maxnumOfFileAndBoxes.FirstOrDefaultAsync(m => m.Id == 1);
+                int.TryParse(Max.MaxNumOfDocument, out int intmaxoffile);
+                int.TryParse(Count, out int plus);
+                int end = intmaxoffile + plus;
+                for (int i = intmaxoffile + 1; i <= end; i++)
+                {
+                    string current = i.ToString().PadLeft(9, '0');
+                    Max.MaxNumOfDocument = current;
+                    _context.maxnumOfFileAndBoxes.Update(Max);
+                    GenerateHelper.Zebra_5_2_5_Portrait(current, Type);
+                    // Update the last indexed file
+                    lastIndexofDocument = current;
+                    lastIndexedDocumentText.Text = $"* Last Document: {lastIndexofDocument}";
+                }
+                await _context.SaveChangesAsync();
+            }
+        }
+        private async void HandleHoneywellPrinterFromTo(string start , string to, string Type)
+        {
+            if (!int.TryParse(start, out int startIndex) || !int.TryParse(to, out int endIndex) || startIndex > endIndex)
+            {
+                barcodeErrorText.Text = "Invalid range. Please enter valid start and end indexes.";
+                return;
+            }
+            if (Type == "Asset")
+            {
+                var Max = await _context.maxnumOfFileAndBoxes.FirstOrDefaultAsync(m => m.Id == 1);
+                int.TryParse(Max.MaxNumOfAsset, out int intmaxofbox);
+
+                for (int i = startIndex; i <= endIndex; i++)
+                {
+                    string current = i.ToString().PadLeft(6, '0');
+                    Max.MaxNumOfAsset = current;
+                    _context.maxnumOfFileAndBoxes.Update(Max);
+                    GenerateHelper.Zebra_5_5_Landscape(current, Type);//TODO
+                    // Update the last indexed box
+                    lastIndexofAsset = current;
+                    lastIndexedAssetText.Text = $"* Last Asset: {lastIndexofAsset}";
+                }
+                await _context.SaveChangesAsync();
+            }
+            if (Type == "Box")
+            {
+                var Max = await _context.maxnumOfFileAndBoxes.FirstOrDefaultAsync(m => m.Id == 1);
+                int.TryParse(Max.MaxNumOfBox, out int intmaxofbox);
+
+                for (int i = startIndex; i <= endIndex; i++)
+                {
+                    string current = i.ToString().PadLeft(6, '0');
+                    Max.MaxNumOfBox = current;
+                    _context.maxnumOfFileAndBoxes.Update(Max);
+                    GenerateHelper.HoneyWell_5_10_landscape(current, Type);
+                    // Update the last indexed box
+                    lastIndexofBox = current;
+                    lastIndexedBoxText.Text = $"* Last Box: {lastIndexofBox}";
+                }
+                await _context.SaveChangesAsync();
+            }
+
+            if (Type == "File")
+            {
+                var Max = await _context.maxnumOfFileAndBoxes.FirstOrDefaultAsync(m => m.Id == 1);
+                int.TryParse(Max.MaxNumOfFile, out int intmaxoffile);
+
+                for (int i = startIndex; i <= endIndex; i++)
+                {
+                    string current = i.ToString().PadLeft(7, '0');
+                    Max.MaxNumOfFile = current;
+                    _context.maxnumOfFileAndBoxes.Update(Max);
+                    GenerateHelper.HoneyWell_5_2_5_portrait(current, Type);
+                    // Update the last indexed file
+                    lastIndexofFile = current;
+                    lastIndexedFileText.Text = $"* Last File: {lastIndexofFile}";
+                }
+                await _context.SaveChangesAsync();
+            }
+            if (Type == "Document")
+            {
+                var Max = await _context.maxnumOfFileAndBoxes.FirstOrDefaultAsync(m => m.Id == 1);
+                int.TryParse(Max.MaxNumOfDocument, out int intmaxoffile);
+                for (int i = startIndex; i <= endIndex; i++)
+                {
+                    string current = i.ToString().PadLeft(9, '0');
+                    Max.MaxNumOfDocument = current;
+                    _context.maxnumOfFileAndBoxes.Update(Max);
+                    GenerateHelper.HoneyWell_5_2_5_portrait(current, Type);
+                    // Update the last indexed file
+                    lastIndexofDocument = current;
+                    lastIndexedDocumentText.Text = $"* Last Document: {lastIndexofDocument}";
+                }
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        private async void HandleZebraPrinterFromTo(string start , string to, string Type)
+        {
+            if (!int.TryParse(start, out int startIndex) || !int.TryParse(to, out int endIndex) || startIndex > endIndex)
+            {
+                barcodeErrorText.Text = "Invalid range. Please enter valid start and end indexes.";
+                return;
+            }
+            if (Type == "Asset")
+            {
+                var Max = await _context.maxnumOfFileAndBoxes.FirstOrDefaultAsync(m => m.Id == 1);
+                int.TryParse(Max.MaxNumOfAsset, out int intmaxofbox);
+
+                for (int i = startIndex; i <= endIndex; i++)
+                {
+                    string current = i.ToString().PadLeft(6, '0');
+                    Max.MaxNumOfAsset = current;
+                    _context.maxnumOfFileAndBoxes.Update(Max);
+                    GenerateHelper.Zebra_5_5_Landscape(current, Type);
+                    // Update the last indexed box
+                    lastIndexofAsset = current;
+                    lastIndexedAssetText.Text = $"* Last Asset: {lastIndexofAsset}";
+                }
+                await _context.SaveChangesAsync();
+            }
+            if (Type == "Box")
+            {
+                var Max = await _context.maxnumOfFileAndBoxes.FirstOrDefaultAsync(m => m.Id == 1);
+                int.TryParse(Max.MaxNumOfBox, out int intmaxofbox);
+
+                for (int i = startIndex; i <= endIndex; i++)
+                {
+                    string current = i.ToString().PadLeft(6, '0');
+                    Max.MaxNumOfBox = current;
+                    _context.maxnumOfFileAndBoxes.Update(Max);
+                    GenerateHelper.HoneyWell_5_10_landscape(current, Type);//TODO
+                    // Update the last indexed box
+                    lastIndexofBox = current;
+                    lastIndexedBoxText.Text = $"* Last Box: {lastIndexofBox}";
+                }
+                await _context.SaveChangesAsync();
+            }
+
+            if (Type == "File")
+            {
+                var Max = await _context.maxnumOfFileAndBoxes.FirstOrDefaultAsync(m => m.Id == 1);
+                int.TryParse(Max.MaxNumOfFile, out int intmaxoffile);
+
+                for (int i = startIndex; i <= endIndex; i++)
+                {
+                    string current = i.ToString().PadLeft(7, '0');
+                    Max.MaxNumOfFile = current;
+                    _context.maxnumOfFileAndBoxes.Update(Max);
+                    GenerateHelper.Zebra_5_2_5_Portrait(current, Type);
+                    // Update the last indexed file
+                    lastIndexofFile = current;
+                    lastIndexedFileText.Text = $"* Last File: {lastIndexofFile}";
+                }
+                await _context.SaveChangesAsync();
+            }
+            if (Type == "Document")
+            {
+                var Max = await _context.maxnumOfFileAndBoxes.FirstOrDefaultAsync(m => m.Id == 1);
+                int.TryParse(Max.MaxNumOfDocument, out int intmaxoffile);
+                for (int i = startIndex; i <= endIndex; i++)
+                {
+                    string current = i.ToString().PadLeft(9, '0');
+                    Max.MaxNumOfDocument = current;
+                    _context.maxnumOfFileAndBoxes.Update(Max);
+                    GenerateHelper.Zebra_5_2_5_Portrait(current, Type);
+                    // Update the last indexed file
+                    lastIndexofDocument = current;
+                    lastIndexedDocumentText.Text = $"* Last Document: {lastIndexofDocument}";
+                }
+                await _context.SaveChangesAsync();
+            }
+        }
 
         private void GenerateTextButton_Click(object sender, RoutedEventArgs e)
         {

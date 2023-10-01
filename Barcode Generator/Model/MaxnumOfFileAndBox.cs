@@ -11,6 +11,7 @@ namespace Barcode_Generator.Model
         public int Id { get; set; }
 
         public string MaxNumOfAsset { get; set; }
+        public string MaxNumOfDocument { get; set; }
         public string MaxNumOfBox { get; set; }
 
         public string MaxNumOfFile { get; set; }
