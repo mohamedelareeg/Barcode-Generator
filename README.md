@@ -33,6 +33,20 @@ To start using the Barcode Generator with Barcode Designer:
 - **Customize with Barcode Designer:** Utilize the Barcode Designer feature to customize barcode labels with text, images, and more.
 - **Print Barcodes:** Select the printer and print the generated barcodes directly or export them to Excel for batch printing.
 
+## Barcode Generator
+
+![Barcode Generator](generator_screenshot.png)
+*Screenshot: Barcode Generator*
+
+The Barcode Generator section allows you to easily select the type of barcode to generate and input the necessary information for the generation process.
+
+## Barcode Designer
+
+![Barcode Designer](designer_screenshot.png)
+*Screenshot: Barcode Designer*
+
+The Barcode Designer empowers you to customize barcode labels with text, images, and various design elements, providing full control over the appearance of your barcodes.
+
 ## Sample Code
 
 ```csharp
