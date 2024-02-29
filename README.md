@@ -35,14 +35,14 @@ To start using the Barcode Generator with Barcode Designer:
 
 ## Barcode Generator
 
-![Barcode Generator](generator_screenshot.png)
+![Barcode Generator](Images/generator.png)
 *Screenshot: Barcode Generator*
 
 The Barcode Generator section allows you to easily select the type of barcode to generate and input the necessary information for the generation process.
 
 ## Barcode Designer
 
-![Barcode Designer](designer_screenshot.png)
+![Barcode Designer](Images/designer.png)
 *Screenshot: Barcode Designer*
 
 The Barcode Designer empowers you to customize barcode labels with text, images, and various design elements, providing full control over the appearance of your barcodes.
