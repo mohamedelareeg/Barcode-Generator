@@ -11,24 +11,22 @@ namespace Barcode_Generator.Context
 {
     public class LogEntryContext : DbContext
     {
+        #region DbSets
         public DbSet<MaxnumOfFileAndBox> maxnumOfFileAndBoxes { get; set; }
+        #endregion
 
-
-
+        #region DbContext Configuration
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            // Get the folder path
             string folderPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Settings");
 
-            // Create the folder if it does not exist
             if (!Directory.Exists(folderPath))
             {
                 Directory.CreateDirectory(folderPath);
             }
 
-            // Set up the SQLite connection
-            optionsBuilder.UseSqlite($"Data Source={folderPath}\\log.db"); ;
+            optionsBuilder.UseSqlite($"Data Source={folderPath}\\log.db");
         }
-
+        #endregion
     }
 }

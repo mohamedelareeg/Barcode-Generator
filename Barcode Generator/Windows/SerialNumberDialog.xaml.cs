@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -17,37 +16,40 @@ using System.Windows.Shapes;
 
 namespace Barcode_Generator
 {
-    /// <summary>
-    /// Interaction logic for DefaultSettingsWindow.xaml
-    /// </summary>
     public partial class SerialNumberDialog : Window
     {
-        public string SerialNumber { get; private set; }
+        #region Properties
 
+        public string SerialNumber { get; private set; }
         public bool IsDialog { get; set; }
+
+        #endregion
+
+        #region Constructor
+
         public SerialNumberDialog()
         {
             InitializeComponent();
             IsDialog = false;
-
         }
+
+        #endregion
+
+        #region Event Handlers
 
         private async void SaveButton_Click(object sender, RoutedEventArgs e)
         {
-            // Validate and save the entered values
             if (!string.IsNullOrWhiteSpace(txtSerialNumber.Text))
             {
                 SerialNumber = txtSerialNumber.Text;
                 DialogResult = true;
                 Close();
-
             }
             else
             {
-                MessageBox.Show("Please enter valid value Serial Number.", "Invalid Value", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Please enter a valid value for Serial Number.", "Invalid Value", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
-
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
@@ -58,6 +60,7 @@ namespace Barcode_Generator
             }
             Close();
         }
+
         private void Border_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton == MouseButton.Left)
@@ -70,5 +73,7 @@ namespace Barcode_Generator
         {
             GetWindow(this).Close();
         }
+
+        #endregion
     }
 }

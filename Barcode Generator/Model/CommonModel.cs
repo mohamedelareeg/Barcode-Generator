@@ -48,6 +48,7 @@ namespace Barcode_Generator.Model
     [Serializable]
     public class CanvasData
     {
+        public string FileName { get; set; }
         public double CanvasWidth { get; set; }
         public double CanvasHeight { get; set; }
         public List<SerializableDraggableItem> DraggableItems { get; set; }

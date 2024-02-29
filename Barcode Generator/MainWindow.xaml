@@ -1,207 +1,51 @@
 ﻿<Window x:Class="Barcode_Generator.MainWindow"
-         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Barcode_Generator"
-    
-        mc:Ignorable="d"
-        Title="File Watcher" Height="500" Width="800"
-        WindowStyle="None"
-        ResizeMode="NoResize"
+        xmlns:fa="http://schemas.fontawesome.io/icons/"
+        Title="Barcode Generator" Width="800" Height="600"
         WindowStartupLocation="CenterScreen"
-        Background="Transparent"
-        AllowsTransparency="True"
-        MouseDown="Window_MouseDown">
-    <Window.Resources>
-        <Style TargetType="Button" x:Key="CustomButtonStyle">
-            <Setter Property="Background" Value="#4CAF50"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Padding" Value="10"/>
-            <Setter Property="Margin" Value="0,5"/>
-            <Setter Property="HorizontalAlignment" Value="Left"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="5">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+        ResizeMode="NoResize"
+        WindowStyle="None">
+    <Grid Background="#F0F0F0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
 
-        <Style TargetType="TextBox" x:Key="CustomTextBoxStyle">
-            <Setter Property="Height" Value="50"/>
-            <Setter Property="Margin" Value="0,5"/>
-            <Setter Property="Padding" Value="10"/>
-            <Setter Property="BorderBrush" Value="#BDBDBD"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="HorizontalAlignment" Value="Left"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="TextBox">
-                        <Border Background="White">
-                            <ScrollViewer x:Name="PART_ContentHost" />
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+        <!-- First Button: Barcode Generator -->
+        <Button Click="btn_Generator" Grid.Row="0" Grid.Column="0" Margin="20" Background="#007ACC" Foreground="White" BorderThickness="0" Padding="20" FontSize="16">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <fa:FontAwesome Icon="Barcode" FontSize="24" VerticalAlignment="Center"/>
+                <TextBlock Text="Barcode Generator" Margin="10 0" VerticalAlignment="Center" />
+            </StackPanel>
+        </Button>
 
-        <Style TargetType="ComboBox" x:Key="CustomComboBoxStyle">
-            <Setter Property="Height" Value="30"/>
-            <Setter Property="Margin" Value="0,5"/>
-            <Setter Property="Padding" Value="10"/>
-            <Setter Property="BorderBrush" Value="#BDBDBD"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="HorizontalAlignment" Value="Left"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-        </Style>
-    </Window.Resources>
-    <Border CornerRadius="12">
+        <!-- Second Button: Barcode Designer -->
+        <Button Click="btn_Designer"  Grid.Row="0" Grid.Column="1" Margin="20" Background="#2ECC71" Foreground="White" BorderThickness="0" Padding="20"  FontSize="16">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <fa:FontAwesome Icon="Pencil" FontSize="24" VerticalAlignment="Center"/>
+                <TextBlock Text="Barcode Designer" Margin="10 0" VerticalAlignment="Center" />
+            </StackPanel>
+        </Button>
 
-        <Border CornerRadius="10"                    
-            BorderThickness="2"
-            Opacity="0.95">
+        <!-- Third Button: Saved Designs -->
+        <Button Click="btn_Saved"  Grid.Row="1" Grid.Column="0" Margin="20" Background="#FFC107" Foreground="White" BorderThickness="0" Padding="20"  FontSize="16">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <fa:FontAwesome Icon="Save" FontSize="24" VerticalAlignment="Center"/>
+                <TextBlock Text="Saved Designs" Margin="10 0" VerticalAlignment="Center" />
+            </StackPanel>
+        </Button>
 
-            <Border.BorderBrush>
-                <SolidColorBrush Color="#004FC4"/>
-            </Border.BorderBrush>
-
-            <Border.Background>
-                <LinearGradientBrush StartPoint="0,1" EndPoint="1,0">
-                    <GradientStop Color="#EDF4FF" Offset="0"/>
-                    <GradientStop Color="#C0C9EA" Offset="1"/>
-                </LinearGradientBrush>
-            </Border.Background>
-
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-                <local:WindowHeader Grid.Row="0" HeaderTitle="Automatic Batch Import"/>
-
-
-                  
-                    <Border Grid.Column="1" Background="#EDF4FF">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto">
-                            <Grid Background="#F4F4F4">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="*"/>
-                                    <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-                            <local:WindowHeader Grid.Row="0" HeaderTitle="Barcode Generator"/>
-
-                                <Border Grid.Row="1" Margin="20" Background="White" CornerRadius="10">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-
-                                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="20">
-                                            <TextBlock Text="Barcode" Margin="0,0,0,5"/>
-                                            <TextBox  x:Name="barCodeTextBox" Width="150" Height="30" Margin="0,0,0,10"/>
-                                            <TextBlock x:Name="barcodeErrorText" Foreground="Red"/>
-                                        <Button Style="{StaticResource CustomButtonStyle}"  Height="40" Content="Generate" Width="100" Click="GenerateButton_Click"/>
-                                        </StackPanel>
-
-                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="20">
-                                            <StackPanel VerticalAlignment="Center">
-                                                <TextBlock Text="Print From" />
-                                                <TextBox  x:Name="startTextBox" Width="100" Height="30" />
-                                            </StackPanel>
-
-                                            <StackPanel VerticalAlignment="Center">
-                                                <TextBlock Text="To" />
-                                                <TextBox  x:Name="endTextBox" Width="100" Height="30"/>
-                                            </StackPanel>
-                                        <Button Style="{StaticResource CustomButtonStyle}"  Height="40" Content="Print" Width="80" Click="PrintButton_Click"/>
-                                        </StackPanel>
-                                        
-
-                                        <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="20">
-                                            <TextBlock Text="Choose File or Box" Foreground="Red" Margin="0,0,0,5"/>
-                                            <ComboBox  Style="{StaticResource CustomComboBoxStyle}" x:Name="typeComboBox" Width="200" Height="40" Margin="0,0,0,10">
-                                            <ComboBoxItem Content="Asset" IsSelected="True"/>
-                                           
-                                            <ComboBoxItem Content="Box"/>
-                                                <ComboBoxItem Content="File"/>
-                                            <ComboBoxItem Content="Document"/>
-                                        </ComboBox>
-                                        <TextBlock Text="Choose Printer" Foreground="Red" Margin="0,0,0,5"/>
-                                        <ComboBox x:Name="printerComboBox" Style="{StaticResource CustomComboBoxStyle}" Width="200" Height="40" Margin="0,5"></ComboBox>
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,20">
-                                        <TextBlock x:Name="lastIndexedAssetText" Foreground="Red" Margin="0,5"/>
-                                        <TextBlock x:Name="lastIndexedBoxText" Foreground="Red" Margin="0,5"/>
-                                        <TextBlock x:Name="lastIndexedFileText" Foreground="Red" Margin="0,5"/>
-                                        <TextBlock x:Name="lastIndexedDocumentText" Foreground="Red" Margin="0,5"/>
-                                        <TextBlock x:Name="RemainCount" Foreground="Red" Margin="0,5"/>
-                                    </StackPanel>
-                                </Grid>
-                                </Border>
-
-                            <Border Grid.Row="2" Margin="20" Background="White" CornerRadius="10">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-
-                                    <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="20">
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="Text Barcode" Margin="10"/>
-                                            <TextBox  x:Name="InputbarCodeTextBox" Width="300" Height="30" Margin="0,0,0,10"/>
-                                            <Button VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10,0,0,10" Style="{StaticResource CustomButtonStyle}" Content="Print" Width="100" Height="30" Click="GenerateTextButton_Click"/>
-                                        </StackPanel>
-
-
-                                        <StackPanel Margin="10,0,0,10" Orientation="Horizontal">
-                                            <CheckBox Margin="5" x:Name="InputBarcodeCheckBox" IsChecked="True" ></CheckBox>
-                                            <Label Content="Show Barcode"></Label>
-                                        </StackPanel>
-                                        <StackPanel Margin="10,0,0,10" Orientation="Horizontal">
-                                            <CheckBox Margin="5" x:Name="InputBarcodeImgCheckBox" IsChecked="True" ></CheckBox>
-                                            <Label Content="Show Image"></Label>
-                                        </StackPanel>
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBox Visibility="Collapsed" x:Name="excelFilePathTextBox" Width="300" Height="30" Margin="10" IsReadOnly="True"/>
-                                            <Button Style="{StaticResource CustomButtonStyle}" Content="Print From Excel" Height="40" Width="150" Click="UploadExcelButton_Click"/>
-                                            <Button Style="{StaticResource CustomButtonStyle}" Content="Download Template" Height="40" Margin="10,0,0,0" Width="150" Click="DownloadTemplateButton_Click"/>
-
-
-                                        </StackPanel>
-
-                                        <TextBlock x:Name="InputbarcodeErrorText" Foreground="Red"/>
-
-                                        
-                                    </StackPanel>
-                                 
-
-                                </Grid>
-                            </Border>
-
-                        </Grid>
-                        </ScrollViewer>
-                    </Border>
-
-
-            </Grid>
-
-        </Border>
-
-    </Border>
+        <!-- Fourth Button: Settings -->
+        <Button Click="btn_Settings"  Grid.Row="1" Grid.Column="1" Margin="20" Background="#E91E63" Foreground="White" BorderThickness="0" Padding="20"  FontSize="16">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <fa:FontAwesome Icon="Cog" FontSize="24" VerticalAlignment="Center"/>
+                <TextBlock Text="Settings" Margin="10 0" VerticalAlignment="Center" />
+            </StackPanel>
+        </Button>
+    </Grid>
 </Window>

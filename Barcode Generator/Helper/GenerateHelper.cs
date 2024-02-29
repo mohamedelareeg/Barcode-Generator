@@ -27,7 +27,7 @@ namespace Barcode_Generator.Helper
         {
 
             // Load your image
-            string imagePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Namaa.jpg");
+            string imagePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "logo.jpg");
             // Create a PrintDocument for printing
             PrintDocument pd = new PrintDocument();
             pd.PrintPage += new PrintPageEventHandler(pd_PrintPage);
@@ -127,7 +127,7 @@ namespace Barcode_Generator.Helper
         }
         public static void HoneyWell_5_2_5_portrait(string data, string type)//HoneyWell File/Box
         {
-            string imagePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Namaa.jpg");
+            string imagePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "logo.jpg");
             PrintDocument pd = new PrintDocument();
             pd.PrintPage += new PrintPageEventHandler(pd_PrintPage);
             pd.Print();
@@ -174,7 +174,7 @@ namespace Barcode_Generator.Helper
         }
         public static void HoneyWell_5_10_landscape(string data, string type)//HoneyWell File/Box
         {
-            string imagePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Namaa.jpg");
+            string imagePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "logo.jpg");
             PrintDocument pd = new PrintDocument();
             pd.PrintPage += new PrintPageEventHandler(pd_PrintPage);
             pd.Print();
@@ -209,7 +209,7 @@ namespace Barcode_Generator.Helper
 
         public static void GenerateBarCode(string data, string type)//HoneyWell File/Box
         {
-            string imagePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Namaa.jpg");
+            string imagePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "logo.jpg");
 
             if (type == "File")
             {
@@ -253,7 +253,7 @@ namespace Barcode_Generator.Helper
                     int textY = 230; // Adjust the vertical position as needed
 
                     ev.Graphics.DrawString(data, printFont1, br, textX, textY);
-                    ev.Graphics.DrawString("تم الفهرسة", printFont1, br, textX + 70, textY);
+                    ev.Graphics.DrawString("Info", printFont1, br, textX + 70, textY);
                 }
             }
 
@@ -294,7 +294,7 @@ namespace Barcode_Generator.Helper
 
         public static void Zebra_5_5_Landscape(string data, string type )//ForZebrea 5*5 portrait
         {
-            string imagePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Namaa.jpg");
+            string imagePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "logo.jpg");
 
             PrintDocument pd = new PrintDocument();
             pd.PrintPage += new PrintPageEventHandler(pd_PrintPage);
@@ -390,7 +390,7 @@ namespace Barcode_Generator.Helper
     
         public static void Zebra_5_2_5_Portrait(string data, string type)
         {
-            string imagePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Namaa.jpg");
+            string imagePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "logo.jpg");
 
             PrintDocument pd = new PrintDocument();
             pd.PrintPage += new PrintPageEventHandler(pd_PrintPage);

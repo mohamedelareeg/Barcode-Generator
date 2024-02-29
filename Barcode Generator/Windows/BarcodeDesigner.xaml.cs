@@ -11,16 +11,11 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
-using ZXing.QrCode;
 using ZXing;
 using ZXing.Common;
 using ZXing.Windows.Compatibility;
 using System.Drawing;
 using System.Windows.Interop;
-using static System.Net.Mime.MediaTypeNames;
-using System.Xml.Linq;
-using DocumentFormat.OpenXml.Presentation;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
@@ -29,13 +24,10 @@ using Barcode_Generator.Model;
 
 namespace Barcode_Generator
 {
-    /// <summary>
-    /// Interaction logic for BarcodeDesigner.xaml
-    /// </summary>
-    /// 
-
     public partial class BarcodeDesigner : Window
     {
+        #region Dragging Variables
+
         private bool isDragging = false;
         private ListBoxItem draggedItem;
         private DraggableItem draggedElement;
@@ -43,65 +35,29 @@ namespace Barcode_Generator
         private string selectedImageTag;
         private List<DraggableItem> draggedItems = new List<DraggableItem>();
 
-        private AppSettings appSettings;
+        #endregion
 
         public BarcodeDesigner()
         {
             InitializeComponent();
-            /*
-            string encryptionKey = SettingsHelper.GenerateRandomKey();
+       
+            InitializeCanvasSize();
+        }
+        #region Initialization
 
-            // Generate a unique initialization vector (128 bits / 16 bytes)
-            string initializationVector = SettingsHelper.GenerateRandomIV();
-            Console.WriteLine("Encryption Key: " + encryptionKey);
-            Console.WriteLine("Initialization Vector: " + initializationVector);
-            */
-            // Load application settings from a secure location (e.g., encrypted file)
-            appSettings = SettingsHelper.LoadAppSettings();
-            // Check device identifier and license expiration
-            if (!string.IsNullOrEmpty(appSettings.DeviceIdentifier))
-            {
-                string generatedDeviceIdentifier = SettingsHelper.GenerateDeviceIdentifier();
 
-                if (appSettings.DeviceIdentifier == generatedDeviceIdentifier)
-                {
-                    DateTime currentDate = DateTime.Now;
 
-                    if (currentDate < appSettings.LicenseExpirationDate)
-                    {
-                        // The device identifier matches the saved one, and the license is still valid
-                        // You can continue with the application logic here
-                    }
-                    else
-                    {
-                        // The license has expired
-                        // Show an alert to the user and then force shut down the application
-                        MessageBox.Show("Your license has expired. Please renew your license to continue using the application.", "License Expiration", MessageBoxButton.OK, MessageBoxImage.Error);
-                        Environment.Exit(0); // Terminate the application
-                    }
-                }
-                else
-                {
-                    // The device identifier has changed
-                    // Show an alert to the user and then force shut down the application
-                    MessageBox.Show("The application cannot be run on this device. Please contact support for assistance.", "Device Identifier Mismatch", MessageBoxButton.OK, MessageBoxImage.Error);
-                    Environment.Exit(0); // Terminate the application
-                }
-            }
-            else
-            {
-                // First run, generate and store the device identifier
-                appSettings.DeviceIdentifier = SettingsHelper.GenerateDeviceIdentifier();
-                // Set the license expiration date (e.g., 1 year from the first run)
-                appSettings.LicenseExpirationDate = DateTime.Now.AddYears(1);
-                SettingsHelper.SaveAppSettings(appSettings);
-            }
-
+        private void InitializeCanvasSize()
+        {
             int canvasWidth = ConvertInchesToPixels(5);
             int canvasHeight = ConvertInchesToPixels(2.5);
             designCanvas.Width = canvasWidth;
             designCanvas.Height = canvasHeight;
         }
+
+        #endregion
+        #region Event Handlers
+
         private void LoadCanvas_Click(object sender, RoutedEventArgs e)
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
@@ -123,7 +79,6 @@ namespace Barcode_Generator
                 SaveCanvasToFile(saveFileDialog.FileName);
             }
         }
-
         private void LoadCanvasFromFile(string fileName)
         {
             IFormatter formatter = new BinaryFormatter();
@@ -188,7 +143,8 @@ namespace Barcode_Generator
                 formatter.Serialize(stream, canvasData);
             }
         }
-
+        #endregion
+        #region Mouse Events
         private int ConvertInchesToPixels(double inches)
         {
             double dpi = 96.0; // Typical screen DPI
@@ -210,42 +166,8 @@ namespace Barcode_Generator
             this.Close();
 
         }
-
-
-        private void designCanvas_Drop(object sender, DragEventArgs e)
-        {
-            if (e.Data.GetDataPresent(DataFormats.StringFormat))
-            {
-                string elementType = e.Data.GetData(DataFormats.StringFormat) as string;
-
-                System.Windows.Point dropPosition = e.GetPosition(designCanvas);
-
-                // If the data is not a string, try to get it from the Tag property of the dragged ListBoxItem
-                if (elementType == null && e.Data.GetDataPresent(DataFormats.Text))
-                {
-                    elementType = e.Data.GetData(DataFormats.Text) as string;
-                }
-
-                if (!string.IsNullOrEmpty(elementType))
-                {
-                    switch (elementType)
-                    {
-                        case "Text":
-                            CreateTextBlock("Sample Text", dropPosition);
-                            break;
-                        case "Barcode":
-                            CreateBarcodeImage("1234567890", dropPosition);
-                            break;
-                        case "Image":
-                            OpenAndAddImage(dropPosition);
-                            break;
-                    }
-                  
-                }
-            }
-        }
-
-
+        #endregion
+        #region Element Creation
         private void CreateTextBlock(string text, System.Windows.Point position)
         {
             TextBlock textBlock = new TextBlock();
@@ -359,6 +281,40 @@ namespace Barcode_Generator
             element.PreviewMouseLeftButtonDown += DraggableItem_PreviewMouseLeftButtonDown;
             element.PreviewMouseMove += DesignCanvas_PreviewMouseMove;
         }
+        #endregion
+        #region Draggable Item Events
+        private void designCanvas_Drop(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.StringFormat))
+            {
+                string elementType = e.Data.GetData(DataFormats.StringFormat) as string;
+
+                System.Windows.Point dropPosition = e.GetPosition(designCanvas);
+
+                // If the data is not a string, try to get it from the Tag property of the dragged ListBoxItem
+                if (elementType == null && e.Data.GetDataPresent(DataFormats.Text))
+                {
+                    elementType = e.Data.GetData(DataFormats.Text) as string;
+                }
+
+                if (!string.IsNullOrEmpty(elementType))
+                {
+                    switch (elementType)
+                    {
+                        case "Text":
+                            CreateTextBlock("Sample Text", dropPosition);
+                            break;
+                        case "Barcode":
+                            CreateBarcodeImage("1234567890", dropPosition);
+                            break;
+                        case "Image":
+                            OpenAndAddImage(dropPosition);
+                            break;
+                    }
+
+                }
+            }
+        }
         private void DesignCanvas_PreviewMouseMove(object sender, MouseEventArgs e)
         {
             if (draggedElement != null && e.LeftButton == MouseButtonState.Pressed)
@@ -425,6 +381,8 @@ namespace Barcode_Generator
             isDragging = false;
             draggedElement = null;
         }
+        #endregion
+        #region Element Deletion
 
         private void DeleteSelectedItem()
         {
@@ -436,12 +394,13 @@ namespace Barcode_Generator
             }
         }
 
+        #endregion
+        #region Element Modification
+
         private void ModifySelectedItemProperties(DraggableItem draggableItem)
         {
-           
             if (draggableItem != null)
             {
-
                 if (draggableItem.Type == ElementType.Text)
                 {
                     // Modify TextBlock properties
@@ -457,10 +416,27 @@ namespace Barcode_Generator
                     // Modify Barcode properties
                     AddPropertyControls(draggableItem);
                 }
-
             }
         }
 
+        #endregion
+        #region Property Controls
+        private void AddPropertyControls(DraggableItem draggableItem)
+        {
+            propertiesStackPanel.Children.Clear();
+
+            if (draggableItem != null)
+            {
+                if (draggableItem.Type == ElementType.Barcode || draggableItem.Type == ElementType.Image)
+                {
+                    propertiesStackPanel.Children.Add(CreateWidthHeightControl(draggableItem));
+                }
+                else if (draggableItem.Type == ElementType.Text)
+                {
+                    propertiesStackPanel.Children.Add(CreateTextPropertiesControl(draggableItem));
+                }
+            }
+        }
         private FrameworkElement CreateTextPropertiesControl(DraggableItem draggableItem)
         {
             TextBlock textLabel = new TextBlock();
@@ -513,25 +489,6 @@ namespace Barcode_Generator
 
             return controlPanel;
         }
-
-        private void AddPropertyControls(DraggableItem draggableItem)
-        {
-            propertiesStackPanel.Children.Clear();
-
-            if (draggableItem != null)
-            {
-                if (draggableItem.Type == ElementType.Barcode || draggableItem.Type == ElementType.Image)
-                {
-                    propertiesStackPanel.Children.Add(CreateWidthHeightControl(draggableItem));
-                }
-                else if (draggableItem.Type == ElementType.Text)
-                {
-                    propertiesStackPanel.Children.Add(CreateTextPropertiesControl(draggableItem));
-                }
-                // Add more conditions for other types if needed
-            }
-        }
-
         private FrameworkElement CreateWidthHeightControl(DraggableItem draggableItem)
         {
             double initialWidth = draggableItem.Element.DesiredSize.Width;
@@ -584,7 +541,8 @@ namespace Barcode_Generator
             return controlPanel;
         }
 
-
+        #endregion
+        #region Design Canvas Events
         private void DesignCanvas_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (isDragging && draggedElement != null)
@@ -649,7 +607,8 @@ namespace Barcode_Generator
             }
         }
 
-
+        #endregion
+        #region DragEnter Event
         private void designCanvas_DragEnter(object sender, DragEventArgs e)
         {
             if (e.Data.GetDataPresent(DataFormats.Text))
@@ -672,6 +631,8 @@ namespace Barcode_Generator
             // Mark the event as handled
             e.Handled = true;
         }
+        #endregion
+        #region ListBox Item Events
         private void ListBoxItem_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             draggedItem = sender as ListBoxItem;
@@ -696,6 +657,9 @@ namespace Barcode_Generator
                 }
             }
         }
+        #endregion
+        #region Toolbox ListBox Event
+
         private void ToolboxListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (toolboxListBox.SelectedItem is ListBoxItem selectedItem)
@@ -706,11 +670,6 @@ namespace Barcode_Generator
                 }
             }
         }
-
-     
+        #endregion
     }
-
-  
-
-
 }

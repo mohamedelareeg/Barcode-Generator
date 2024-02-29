@@ -1,12 +1,11 @@
 ﻿<Window x:Class="Barcode_Generator.BarcodeDesigner"
-         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Barcode_Generator"
-    
         mc:Ignorable="d"
-        Title="File Watcher" Height="600" Width="800"
+        Title="Barcode Designer" Height="600" Width="800"
         WindowStyle="None"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen"
@@ -14,6 +13,36 @@
         AllowsTransparency="True"
         MouseDown="Window_MouseDown">
     <Window.Resources>
+        <Style x:Key="ModernButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#007ACC"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="5"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+                            <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"  Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#005FA6"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#00395F"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Define custom button style -->
         <Style TargetType="Button" x:Key="CustomButtonStyle">
             <Setter Property="Background" Value="#4CAF50"/>
             <Setter Property="Foreground" Value="White"/>
@@ -34,124 +63,69 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
-        <Style TargetType="TextBox" x:Key="CustomTextBoxStyle">
-            <Setter Property="Height" Value="50"/>
-            <Setter Property="Margin" Value="0,5"/>
-            <Setter Property="Padding" Value="10"/>
-            <Setter Property="BorderBrush" Value="#BDBDBD"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="HorizontalAlignment" Value="Left"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="TextBox">
-                        <Border Background="White">
-                            <ScrollViewer x:Name="PART_ContentHost" />
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style TargetType="ComboBox" x:Key="CustomComboBoxStyle">
-            <Setter Property="Height" Value="30"/>
-            <Setter Property="Margin" Value="0,5"/>
-            <Setter Property="Padding" Value="10"/>
-            <Setter Property="BorderBrush" Value="#BDBDBD"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="HorizontalAlignment" Value="Left"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-        </Style>
     </Window.Resources>
-    <Border CornerRadius="12">
-
-        <Border CornerRadius="10"                    
-            BorderThickness="2"
-            Opacity="0.95">
-
-            <Border.BorderBrush>
-                <SolidColorBrush Color="#004FC4"/>
-            </Border.BorderBrush>
-
-            <Border.Background>
-                <LinearGradientBrush StartPoint="0,1" EndPoint="1,0">
-                    <GradientStop Color="#EDF4FF" Offset="0"/>
-                    <GradientStop Color="#C0C9EA" Offset="1"/>
-                </LinearGradientBrush>
-            </Border.Background>
-
+    <Grid>
+        <!-- Main content area -->
+        <Border CornerRadius="12" BorderThickness="2" Opacity="0.95"
+                BorderBrush="#004FC4" Background="#EDF4FF">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-                <local:WindowHeader Grid.Row="0" HeaderTitle="Automatic Batch Import"/>
+                <!-- Window Header -->
+                <local:WindowHeader Grid.Row="0" HeaderTitle="Barcode Designer"/>
 
+                <!-- Buttons -->
+                <StackPanel Margin="20 20 20 10" Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Bottom">
+                    <Button Style="{StaticResource ModernButtonStyle}" Content="Load Canvas" Margin="0,0,10,0" Click="LoadCanvas_Click"/>
+                    <Button Style="{StaticResource ModernButtonStyle}" Content="Save Canvas" Click="SaveCanvas_Click"/>
+                </StackPanel>
+                <!-- Content Area -->
+                <Border Grid.Row="2" Margin="20" Background="White" CornerRadius="10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <!-- Toolbox -->
+                        <ListBox Grid.Column="0" x:Name="toolboxListBox" SelectionChanged="ToolboxListBox_SelectionChanged">
+                            <ListBox.Resources>
+                                <Style TargetType="{x:Type ListBoxItem}">
+                                    <EventSetter Event="PreviewMouseLeftButtonDown" Handler="ListBoxItem_PreviewMouseLeftButtonDown"/>
+                                    <EventSetter Event="PreviewMouseMove" Handler="ListBoxItem_PreviewMouseMove"/>
+                                </Style>
+                            </ListBox.Resources>
+                            <ListBoxItem>
+                                <Image Source="/Assets/text.png" Width="50" Margin="10" Tag="Text" />
+                            </ListBoxItem>
+                            <ListBoxItem>
+                                <Image Source="/Assets/barcode.png" Width="50" Margin="10" Tag="Barcode" />
+                            </ListBoxItem>
+                            <ListBoxItem>
+                                <Image Source="/Assets/photo.png" Width="50" Margin="10" Tag="Image" />
+                            </ListBoxItem>
+                        </ListBox>
 
+                        <!-- Canvas -->
+                        <Canvas Grid.Column="1" Name="designCanvas" AllowDrop="True" Drop="designCanvas_Drop"
+                                PreviewMouseLeftButtonDown="DesignCanvas_MouseDown" PreviewMouseMove="DesignCanvas_MouseMove"
+                                PreviewMouseLeftButtonUp="DesignCanvas_MouseUp" DragEnter="designCanvas_DragEnter" Background="FloralWhite">
+                            <!-- Canvas content will be dynamically added -->
+                        </Canvas>
 
-                <Border Grid.Column="1" Background="#EDF4FF">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <Grid Background="#F4F4F4">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="*"/>
-                                <RowDefinition Height="550"/>
-                            </Grid.RowDefinitions>
-                            <local:WindowHeader Grid.Row="0" HeaderTitle="Barcode Designer"/>
-
-                            <Border Grid.Row="1" Margin="20" Background="White" CornerRadius="10">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="100"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-
-                                    <ListBox Grid.Column="0" x:Name="toolboxListBox" SelectionChanged="ToolboxListBox_SelectionChanged">
-                                        <ListBox.Resources>
-                                            <Style TargetType="{x:Type ListBoxItem}">
-                                                <EventSetter Event="PreviewMouseLeftButtonDown" Handler="ListBoxItem_PreviewMouseLeftButtonDown"/>
-                                                <EventSetter Event="PreviewMouseMove" Handler="ListBoxItem_PreviewMouseMove"/>
-                                            </Style>
-                                        </ListBox.Resources>
-                                        <ListBoxItem>
-                                            <Image Source="/Assets/text.png" Width="50" Margin="10" Tag="Text" />
-                                        </ListBoxItem>
-                                        <ListBoxItem>
-                                            <Image Source="/Assets/barcode.png" Width="50" Margin="10" Tag="Barcode" />
-                                        </ListBoxItem>
-                                        <ListBoxItem>
-                                            <Image Source="/Assets/photo.png" Width="50" Margin="10" Tag="Image" />
-                                        </ListBoxItem>
-                                    </ListBox>
-
-                                    <!-- Canvas (Column 1) -->
-                                    <Canvas Grid.Column="1" Name="designCanvas" AllowDrop="True" Drop="designCanvas_Drop"
-        PreviewMouseLeftButtonDown="DesignCanvas_MouseDown" PreviewMouseMove="DesignCanvas_MouseMove"
-        PreviewMouseLeftButtonUp="DesignCanvas_MouseUp" DragEnter="designCanvas_DragEnter" Background="FloralWhite">
-                                        <!-- Canvas content will be dynamically added -->
-                                    </Canvas>
-
-
-                                    <!-- Properties Panel (Column 2) -->
-                                    <StackPanel  x:Name="propertiesStackPanel" Grid.Column="2">
-                                        <TextBlock Text="Properties" Margin="5"/>
-                                        <!-- Property controls will be dynamically added/updated based on selected element -->
-                                    </StackPanel>
-                                </Grid>
-                            </Border>
-
-                            <!-- "Load Canvas" and "Save Canvas" buttons -->
-                            <Button Grid.Row="1" Content="Load Canvas" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="10,0,0,10" Click="LoadCanvas_Click"/>
-                            <Button Grid.Row="1" Content="Save Canvas" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="90,0,0,10" Click="SaveCanvas_Click"/>
-                        </Grid>
-                    </ScrollViewer>
+                        <!-- Properties Panel -->
+                        <StackPanel x:Name="propertiesStackPanel" Grid.Column="2">
+                            <TextBlock Text="Properties" Margin="5"/>
+                            <!-- Property controls will be dynamically added/updated based on selected element -->
+                        </StackPanel>
+                    </Grid>
+                    
                 </Border>
-
-
+                
             </Grid>
-
         </Border>
-
-    </Border>
+    </Grid>
 </Window>

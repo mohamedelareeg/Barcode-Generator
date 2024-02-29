@@ -22,15 +22,28 @@ namespace Barcode_Generator
 {
     public partial class CanvasListWindow : Window
     {
-        private string canvasFolderPath = @"C:\Users\HP\Desktop\Canvas";
+        #region Fields
+
+        private string canvasFolderPath;
         private List<CanvasData> canvasDataList;
+
+        #endregion
+        #region Constructor
 
         public CanvasListWindow()
         {
             InitializeComponent();
+            canvasFolderPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "exports");
+            if (!Directory.Exists(canvasFolderPath))
+            {
+                Directory.CreateDirectory(canvasFolderPath);
+            }
             LoadCanvasDataList();
             DisplayCanvasDataList();
         }
+
+        #endregion
+        #region Methods
 
         private void LoadCanvasDataList()
         {
@@ -42,10 +55,12 @@ namespace Barcode_Generator
                 {
                     try
                     {
+                        string fileName = Path.GetFileName(file); // Get the file name
                         IFormatter formatter = new BinaryFormatter();
                         using (Stream stream = new FileStream(file, FileMode.Open, FileAccess.Read))
                         {
                             CanvasData canvasData = (CanvasData)formatter.Deserialize(stream);
+                            canvasData.FileName = fileName; // Store the file name in CanvasData
                             canvasDataList.Add(canvasData);
                         }
                     }
@@ -61,37 +76,13 @@ namespace Barcode_Generator
         {
             canvasListBox.ItemsSource = canvasDataList;
         }
+
         private int ConvertInchesToPixels(double inches)
         {
             double dpi = 96.0; // Typical screen DPI
             return (int)(inches * dpi);
         }
-        private void CanvasListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (canvasListBox.SelectedItem is CanvasData selectedCanvasData)
-            {
-                int canvasWidth = ConvertInchesToPixels(5);
-                int canvasHeight = ConvertInchesToPixels(2.5);
-                canvasPreview.Width = canvasWidth;
-                canvasPreview.Height = canvasHeight;
-                canvasPreview.Children.Clear();
-                foreach (SerializableDraggableItem serializableItem in selectedCanvasData.DraggableItems)
-                {
-                    if (serializableItem.Type == ElementType.Text)
-                    {
-                        CreateTextBlock("Sample Text", new System.Windows.Point(serializableItem.X, serializableItem.Y));
-                    }
-                    else if (serializableItem.Type == ElementType.Barcode)
-                    {
-                        CreateBarcodeImage("1234567890", new System.Windows.Point(serializableItem.X, serializableItem.Y));
-                    }
-                    else if (serializableItem.Type == ElementType.Image)
-                    {
-                        //CreateImageFromBase64(serializableItem.ImageBase64, new System.Windows.Point(serializableItem.X, serializableItem.Y));
-                    }
-                }
-            }
-        }
+
         private void CreateTextBlock(string text, System.Windows.Point position)
         {
             TextBlock textBlock = new TextBlock();
@@ -99,9 +90,7 @@ namespace Barcode_Generator
             Canvas.SetLeft(textBlock, position.X);
             Canvas.SetTop(textBlock, position.Y);
             canvasPreview.Children.Add(textBlock);
-            
         }
-
         private void CreateBarcodeImage(string content, System.Windows.Point position)
         {
             BarcodeWriter barcodeWriter = new BarcodeWriter();
@@ -129,7 +118,7 @@ namespace Barcode_Generator
             Canvas.SetLeft(barcodeImage, position.X);
             Canvas.SetTop(barcodeImage, position.Y);
             canvasPreview.Children.Add(barcodeImage);
-           
+
         }
         private void CreateImageFromBase64(string imageBase64, System.Windows.Point position)
         {
@@ -153,9 +142,36 @@ namespace Barcode_Generator
             Canvas.SetTop(image, position.Y);
             canvasPreview.Children.Add(image);
 
-         
-        }
 
+        }
+        #endregion
+        #region Event Handlers
+        private void CanvasListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (canvasListBox.SelectedItem is CanvasData selectedCanvasData)
+            {
+                int canvasWidth = ConvertInchesToPixels(5);
+                int canvasHeight = ConvertInchesToPixels(2.5);
+                canvasPreview.Width = canvasWidth;
+                canvasPreview.Height = canvasHeight;
+                canvasPreview.Children.Clear();
+                foreach (SerializableDraggableItem serializableItem in selectedCanvasData.DraggableItems)
+                {
+                    if (serializableItem.Type == ElementType.Text)
+                    {
+                        CreateTextBlock("Sample Text", new System.Windows.Point(serializableItem.X, serializableItem.Y));
+                    }
+                    else if (serializableItem.Type == ElementType.Barcode)
+                    {
+                        CreateBarcodeImage("1234567890", new System.Windows.Point(serializableItem.X, serializableItem.Y));
+                    }
+                    else if (serializableItem.Type == ElementType.Image)
+                    {
+                        //CreateImageFromBase64(serializableItem.ImageBase64, new System.Windows.Point(serializableItem.X, serializableItem.Y));
+                    }
+                }
+            }
+        }
         private void PrintButton_Click(object sender, RoutedEventArgs e)
         {
             if (canvasListBox.SelectedItem is CanvasData selectedCanvasData)
@@ -168,5 +184,6 @@ namespace Barcode_Generator
         {
 
         }
+        #endregion
     }
 }
